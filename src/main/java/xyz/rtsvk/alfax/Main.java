@@ -83,6 +83,7 @@ public class Main {
 		proc.registerCommand(new SetAnnouncementChannelCommand());
 		proc.registerCommand(new ScheduleEventCommand());
 		proc.registerCommand(new MathExpressionCommand());
+		proc.registerCommand(new CatCommand());
 
 		// scheduler
 		if (config.getBooleanOrDefault("scheduler-enabled", false)) {
