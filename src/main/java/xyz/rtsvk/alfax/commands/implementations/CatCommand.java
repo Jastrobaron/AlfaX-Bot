@@ -38,17 +38,17 @@ public class CatCommand implements Command {
 			}
 			JSONObject json = (JSONObject) (new JSONParser().parse(response.toString()));
 
-			JSONObject image_url = (JSONObject) json.get("url");
+			JSONObject imageUrl = (JSONObject) json.get("url");
 
 			input.close();
 			conn.disconnect();
 
 			EmbedCreateSpec table = EmbedCreateSpec.builder()
-					.author("thecatapi.com", "https://thecatapi.com/", "")
-					.title("Kočička (mačička)")
-    			.image(image_url.toString())
-					.timestamp(Instant.now())
-					.build();
+				.author("thecatapi.com", "https://thecatapi.com/", "")
+				.title("Kočička (mačička)")
+    		.image(imageUrl.toString())
+				.timestamp(Instant.now())
+				.build();
 
 			channel.createMessage(table).block();
 
