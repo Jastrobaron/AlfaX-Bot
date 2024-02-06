@@ -22,8 +22,6 @@ public class CatCommand implements Command {
 
 	@Override
 	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
-		DecimalFormat f = new DecimalFormat("##.00");
-
 		try {
 			URL url = new URL("https://api.thecatapi.com/v1/images/search");
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
