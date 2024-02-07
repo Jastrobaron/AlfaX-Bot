@@ -51,6 +51,7 @@ public class CatCommand implements Command {
 			channel.createMessage(table).block();
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			channel.createMessage("Kočky došly :(").block();
 		}
 	}
