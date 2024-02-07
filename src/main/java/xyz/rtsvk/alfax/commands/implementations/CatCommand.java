@@ -12,6 +12,7 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.List;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import xyz.rtsvk.alfax.commands.Command;
 import xyz.rtsvk.alfax.util.Config;
@@ -34,9 +35,9 @@ public class CatCommand implements Command {
 				int read = input.read(buffer);
 				response.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
 			}
-			JSONObject json = (JSONObject) (new JSONParser().parse(response.toString()));
+			JSONArray json = (JSONArray) (new JSONParser().parse(response.toString()));
 
-			JSONObject imageUrl = (JSONObject) json.get("url");
+			JSONObject image = (JSONObject) json.get(0);
 
 			input.close();
 			conn.disconnect();
@@ -44,7 +45,7 @@ public class CatCommand implements Command {
 			EmbedCreateSpec table = EmbedCreateSpec.builder()
 				.author("thecatapi.com", "https://thecatapi.com/", "")
 				.title("Kočička (mačička)")
-    		.image(imageUrl.toString())
+    		.image(image.get("url").toString())
 				.timestamp(Instant.now())
 				.build();
 
