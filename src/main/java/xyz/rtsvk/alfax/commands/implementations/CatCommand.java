@@ -35,6 +35,7 @@ public class CatCommand implements Command {
 				int read = input.read(buffer);
 				response.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
 			}
+
 			JSONArray json = (JSONArray) (new JSONParser().parse(response.toString()));
 
 			JSONObject image = (JSONObject) json.get(0);
@@ -46,6 +47,7 @@ public class CatCommand implements Command {
 				.author("thecatapi.com", "https://thecatapi.com/", "")
 				.title("Kočička (mačička)")
     		.image(image.get("url").toString())
+
 				.timestamp(Instant.now())
 				.build();
 
