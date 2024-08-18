@@ -8,6 +8,7 @@ import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
+import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
@@ -201,7 +202,10 @@ public class Main {
 				}
 
 				String cmdName = first.startsWith(prefix) ? first.substring(prefix.length()) : commandOnTag;
-				logger.info(TextUtils.format("Command received: ${0} (user=${1}, channel=${2})", msg, user.getUsername(), channel.getId().asString()));
+				String messageToLog = (channel instanceof PrivateChannel)
+						? String.format("<private message of length %d>", msg.length())
+						: msg;
+				logger.info(TextUtils.format("Command received: ${0} (user=${1}, channel=${2})", messageToLog, user.getUsername(), channel.getId().asString()));
 				Thread cmdThread = new Thread(() -> {
 					ICommand cmd = proc.getCommandExecutor(cmdName);
 					Chat chat = new DiscordChat(channel, message.getId(), prefix);
@@ -212,12 +216,13 @@ public class Main {
 						} else {
 							cmd.handle(user, chat, tokenList.subList(1, tokenList.size()), guildId, gateway, language);
 						}
-						commandRatelimiter.unlock();
 					} catch (RateLimitExceededException ree) {
 						chat.sendMessage(language.getMessage("general.error.rate-limit-exceeded"));
 					} catch (Exception e) {
 						e.printStackTrace(System.out);
 						chat.sendMessage("**:x: " + e.getMessage() + "**");
+					} finally {
+						commandRatelimiter.unlock();
 					}
 				});
 				cmdThread.start();
@@ -235,9 +240,15 @@ public class Main {
 			try {
 				ReactionEmoji emoji = event.getEmoji();
 				Optional<IReactionCallback> cb = rce.getReactionCallback(emoji);
-				if (cb.isPresent()) {
-					Message message = event.getMessage().block();
-					User user = event.getUser().block();
+				if (cb.isEmpty()) {
+					return;
+				}
+
+				Optional<Message> messageOpt = event.getMessage().blockOptional();
+				Optional<User> userOpt = event.getUser().blockOptional();
+				if (messageOpt.isPresent() && userOpt.isPresent()) {
+					Message message = messageOpt.get();
+					User user = userOpt.get();
 					MessageManager language = forceDefaultLanguage
 							? MessageManager.getMessages(defaultLanguage)
 							: Database.getUserLanguage(user.getId(), defaultLanguage);
