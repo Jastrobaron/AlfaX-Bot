@@ -18,18 +18,26 @@ import java.util.*;
  */
 public class CommandProcessor {
 
+	/** Command argument separator */
 	public static final Character SEPARATOR = ' ';
+	/** List of characters that can be used as quotation marks */
 	public static final List<Character> QUOTES = List.of('"', '\'');
 
-	private final Map<ICommand, ApplicationCommandData> commands = new HashMap<>();
+	/** Map for storing registered command-command data pairs. Command data is null for legacy commands. */
+	private final Map<ICommand, ApplicationCommandData> commands;
+	/** Command prefix */
 	private final String prefix;
+	/** Discord client providing access to the Discord database */
 	private final GatewayDiscordClient gateway;
+	/** Application ID */
 	private final long appId;
+	/** Fallback command to execute when the user enters an unknown command. */
 	private ICommand fallback = null;
 
 	public CommandProcessor(GatewayDiscordClient gateway, String prefix) throws Exception {
 		this.gateway = gateway;
 		this.prefix = prefix;
+		this.commands = new HashMap<>();
 		this.appId = this.gateway.getRestClient().getApplicationId().blockOptional()
 				.orElseThrow(() -> new Exception("Could not get application ID"));
 	}
@@ -45,68 +53,13 @@ public class CommandProcessor {
 	}
 
 	public void executeCommand(String command, User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
-		ICommand cmd = this.getCommandExecutor(command);
+		ICommand cmd = this.getCommandExecutor(command, this.fallback);
 		MessageManager language = Database.getUserLanguage(user.getId(), "legacy");
-		if (cmd == null) {
-			cmd = this.fallback;
-		}
 		try {
 			cmd.handle(user, new DiscordChat(channel, messageId, this.prefix), args, guildId, bot, language);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static List<String> splitCommandString(String input) {
-		List<String> output = new LinkedList<>();
-		StringBuilder token = new StringBuilder();
-		int state = 0;
-
-		int index = 0;
-		while (index < input.length()) {
-			char currentChar = input.charAt(index++);
-			switch (state) {
-				case 0:
-					if (currentChar == SEPARATOR) state = 1;
-					else token.append(currentChar);
-					break;
-
-				case 1:
-					if (!token.isEmpty()) {
-						output.add(token.toString());
-						token.setLength(0);
-					}
-					if (QUOTES.contains(currentChar)) {
-						state = 2;
-					}
-					else {
-						token.append(currentChar);
-						state = 0;
-					}
-					break;
-
-				case 2:
-					if (currentChar == '\\') state = 3;
-					else if (QUOTES.contains(currentChar)) {
-						if (!token.isEmpty()) {
-							output.add(token.toString());
-							token.setLength(0);
-						}
-						state = 0;
-					} else token.append(currentChar);
-					break;
-
-				case 3:
-					token.append(currentChar);
-					state = 2;
-					break;
-			}
-		}
-
-		if (!token.isEmpty())
-			output.add(token.toString());
-
-		return output.stream().map(String::trim).toList();
 	}
 
 	public void registerCommand(ICommand command) throws Exception {
@@ -120,11 +73,11 @@ public class CommandProcessor {
 		}
 	}
 
-	public void reloadCommands() {
+	public void reloadApplicationCommands() {
 		ApplicationService service = this.gateway.getRestClient().getApplicationService();
-		this.commands.entrySet().stream().forEach(e -> {
-			if (e.getKey() instanceof IApplicationCommand appCmd) {
-				service.deleteGlobalApplicationCommand(this.appId, e.getValue().id().asLong());
+		this.commands.forEach((cmd, data) -> {
+			if (cmd instanceof IApplicationCommand appCmd) {
+				service.deleteGlobalApplicationCommand(this.appId, data.id().asLong());
 				service.createGlobalApplicationCommand(this.appId, appCmd.getCommandCreateRequest());
 			}
 		});
@@ -144,5 +97,68 @@ public class CommandProcessor {
 
 	public long getApplicationId() {
 		return this.appId;
+	}
+
+	public static List<String> splitCommandString(String input) {
+		List<String> output = new ArrayList<>();
+		StringBuilder token = new StringBuilder();
+		int state = 0;
+
+
+
+		int index = 0;
+		while (index < input.length()) {
+			char currentChar = input.charAt(index++);
+			switch (state) {
+				case 0:
+					if (currentChar == SEPARATOR) {
+						state = 1;
+					}
+					else {
+						token.append(currentChar);
+					}
+					break;
+
+				case 1:
+					if (!token.isEmpty()) {
+						output.add(token.toString());
+						token.setLength(0);
+					}
+					if (QUOTES.contains(currentChar)) {
+						state = 2;
+					}
+					else {
+						token.append(currentChar);
+						state = 0;
+					}
+					break;
+
+				case 2:
+					if (currentChar == '\\') {
+						state = 3;
+					}
+					else if (QUOTES.contains(currentChar)) {
+						if (!token.isEmpty()) {
+							output.add(token.toString());
+							token.setLength(0);
+						}
+						state = 0;
+					} else {
+						token.append(currentChar);
+					}
+					break;
+
+				case 3:
+					token.append(currentChar);
+					state = 2;
+					break;
+			}
+		}
+
+		if (!token.isEmpty()) {
+			output.add(token.toString());
+		}
+
+		return output.stream().map(String::trim).toList();
 	}
 }
