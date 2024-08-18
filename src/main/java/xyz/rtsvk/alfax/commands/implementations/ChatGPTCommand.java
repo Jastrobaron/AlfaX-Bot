@@ -7,6 +7,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.Database;
@@ -26,7 +27,7 @@ public class ChatGPTCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (this.config.getBoolean("openai-disabled")) {
 			chat.sendMessage(language.getMessage("command.chatgpt.disabled"));
 			return;
@@ -78,8 +79,8 @@ public class ChatGPTCommand implements ICommand {
 		ChatCompletionResult result = service.createChatCompletion(completionRequest);
 		long tokenAmt = result.getUsage().getTotalTokens();
 		Database.subtractUserCredits(user.getId(), tokenAmt);
-		if (guildId != null) {
-			Database.addTokenUsage(guildId, tokenAmt);
+		if (guildState != null) {
+			Database.addTokenUsage(guildState.getGuildId(), tokenAmt);
 		}
 		List<ChatCompletionChoice> choices = result.getChoices();
 		choices.forEach(e -> {

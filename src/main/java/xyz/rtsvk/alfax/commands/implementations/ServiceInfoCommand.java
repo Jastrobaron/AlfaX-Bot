@@ -1,8 +1,8 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -21,7 +21,7 @@ public class ServiceInfoCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (!Database.checkPermissions(user.getId(), Database.PERMISSION_ADMIN))  {
 			chat.sendMessage("Insufficient permissions!");
 			return;

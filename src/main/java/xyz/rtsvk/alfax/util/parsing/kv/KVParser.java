@@ -1,7 +1,12 @@
 package xyz.rtsvk.alfax.util.parsing.kv;
 
 import xyz.rtsvk.alfax.util.parsing.IParser;
-import xyz.rtsvk.alfax.util.statemachine.impl.KeyValueStateMachine;
+import xyz.rtsvk.alfax.util.statemachine.StateMachine;
+import xyz.rtsvk.alfax.util.statemachine.TransitionResult;
+import xyz.rtsvk.alfax.util.statemachine.lex.KeyValueStateMachine;
+import xyz.rtsvk.alfax.util.statemachine.input.InputSuppliers;
+import xyz.rtsvk.alfax.util.statemachine.parsers.KVParserStateMachine;
+import xyz.rtsvk.alfax.util.tuples.Pair;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -35,23 +40,17 @@ public class KVParser implements IParser {
 				result.put(key, value);
 			}
 		} else if (source instanceof InputStream in) {
-			if (!in.markSupported()) {
-				throw new Exception("Marking is not supported for the type of InputStream used!");
-			}
-			KeyValueStateMachine fsm = new KeyValueStateMachine(this.entrySeparator);
-			fsm.reset();
-			int c;
-			while ((c = in.read()) != -1) {
-				in.mark(1);
-				if (!fsm.transition((char) c)) {
-					continue;
-				}
-				in.reset();
-				String entry = fsm.getBufferContent();
-				int kvDelimIdx = entry.indexOf(KeyValueStateMachine.KEY_VALUE_DELIMITER);
-				String key = entry.substring(0, kvDelimIdx);
-				Object value = entry.substring(kvDelimIdx + 1).trim();
-				result.put(key, value);
+			KeyValueStateMachine lexer = new KeyValueStateMachine(this.entrySeparator);
+			lexer.setInputSupplier(InputSuppliers.fromInputStream(in));
+			lexer.reset();
+
+			KVParserStateMachine parser = new KVParserStateMachine(this.entrySeparator.toString());
+			parser.setInputSupplier(InputSuppliers.fromStateMachine(lexer));
+			parser.reset();
+
+			Pair<String, String> kvPair;
+			while ((kvPair = parser.getNext()) != null) {
+				result.put(kvPair.getKey(), kvPair.getValue());
 			}
 		}
 		return result;

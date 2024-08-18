@@ -1,8 +1,8 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -13,7 +13,7 @@ import java.util.List;
 public class CreditBuyCommand implements ICommand {
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		long amount = !args.isEmpty() ? Long.parseLong(args.get(0)) : 100;
 		if (Database.addUserCredits(user.getId(), amount)) {
 			chat.sendMessage(language.getFormattedString("command.credit-buy.success").addParam("amount", amount).build());

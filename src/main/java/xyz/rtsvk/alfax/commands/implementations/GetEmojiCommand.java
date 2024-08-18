@@ -5,6 +5,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.chat.Chat;
 import xyz.rtsvk.alfax.util.text.MessageManager;
@@ -14,8 +15,8 @@ import java.util.List;
 public class GetEmojiCommand implements ICommand {
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
-		Guild server = bot.getGuildById(guildId).block();
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+		Guild server = bot.getGuildById(guildState.getGuildId()).block();
 		if (server == null) {
 			chat.sendMessage(language.getMessage("command.get-emoji.error.server-not-found"));
 			return;

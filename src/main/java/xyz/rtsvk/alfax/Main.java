@@ -1,5 +1,8 @@
 package xyz.rtsvk.alfax;
 
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -10,7 +13,8 @@ import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
-import xyz.rtsvk.alfax.commands.ICommand;
+import xyz.rtsvk.alfax.commands.CommandAdapter;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 import xyz.rtsvk.alfax.commands.implementations.*;
 import xyz.rtsvk.alfax.mqtt.Mqtt;
@@ -88,12 +92,14 @@ public class Main {
 		final String defaultLanguage = config.getString("default-language");
 		final boolean forceDefaultLanguage = config.getBoolean("force-default-language");
 
-		CommandProcessor proc = new CommandProcessor(gateway, prefix);
-		proc.setFallback(new HelpCommand(proc) {
+		AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+		AudioSourceManagers.registerRemoteSources(playerManager);
+
+		CommandProcessor proc = new CommandProcessor(gateway, playerManager);
+		proc.setFallback(new CommandAdapter() {
 			@Override
-			public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) {
+			public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) {
 				chat.sendMessage(language.getFormattedString("command.not-found").addParam("prefix", prefix).build());
-				super.handle(user, chat, args, guildId, bot, language);
 			}
 		});
 
@@ -127,7 +133,7 @@ public class Main {
 		proc.registerCommand(new ClearMessageManagerCacheCommand());
 		proc.registerCommand(new ServiceInfoCommand(() -> Thread.getAllStackTraces().keySet()));
 		proc.registerCommand(new GetEmojiCommand());
-		//proc.registerCommand(new PlayCommand(playerManager, player, provider, trackScheduler));
+		proc.registerCommand(new PlayCommand());
 
 		ServiceWatcher watcher = new ServiceWatcher();
 		Thread scheduler = new CommandExecutionScheduler(gateway, proc);
@@ -193,29 +199,23 @@ public class Main {
 				MessageManager language = forceDefaultLanguage
 						? MessageManager.getMessages(defaultLanguage)
 						: Database.getUserLanguage(user.getId(), defaultLanguage);
+				Chat chat = new DiscordChat(channel, message.getId(), prefix);
 
 				if (language == null) {
-					logger.error("Failed to load language for user " + user.getId().asString());
-					channel.createMessage("A fatal error has occured. Please contact the administrator.")
-							.withMessageReference(message.getId()).block();
+					logger.error(TextUtils.format("Failed to load language for user <@${0}>", user.getId().asString()));
+					chat.sendMessage("A fatal error has occured. Please contact the administrator.");
 					return;
 				}
 
 				String cmdName = first.startsWith(prefix) ? first.substring(prefix.length()) : commandOnTag;
 				String messageToLog = (channel instanceof PrivateChannel)
-						? String.format("<private message of length %d>", msg.length())
+						? TextUtils.format("<private message of length ${0}>", msg.length())
 						: msg;
 				logger.info(TextUtils.format("Command received: ${0} (user=${1}, channel=${2})", messageToLog, user.getUsername(), channel.getId().asString()));
 				Thread cmdThread = new Thread(() -> {
-					ICommand cmd = proc.getCommandExecutor(cmdName);
-					Chat chat = new DiscordChat(channel, message.getId(), prefix);
 					try {
 						commandRatelimiter.lock();
-						if (cmd == null) {
-							chat.sendMessage(language.getFormattedString("command.not-found").addParam("prefix", prefix).build());
-						} else {
-							cmd.handle(user, chat, tokenList.subList(1, tokenList.size()), guildId, gateway, language);
-						}
+						proc.executeCommand(cmdName, user, chat, tokenList.subList(1, tokenList.size()), guildId, gateway, language);
 					} catch (RateLimitExceededException ree) {
 						chat.sendMessage(language.getMessage("general.error.rate-limit-exceeded"));
 					} catch (Exception e) {

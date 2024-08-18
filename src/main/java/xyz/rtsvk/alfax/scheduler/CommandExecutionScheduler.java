@@ -1,11 +1,14 @@
 package xyz.rtsvk.alfax.scheduler;
 
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 import xyz.rtsvk.alfax.util.Logger;
+import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chat.impl.DiscordChat;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.time.LocalDate;
@@ -43,8 +46,9 @@ public class CommandExecutionScheduler extends Thread {
 			if (!tasks.isEmpty()) tasks.forEach(e -> {
 				final List<String> commandArgs = new ArrayList<>(Arrays.asList(e.getCommand().split(" ")));
 				String cmdName = commandArgs.remove(0);
-				ICommand cmd = proc.getCommandExecutor(cmdName);
+				User self = this.gateway.getSelf().block();
 				MessageChannel channel = (MessageChannel) this.gateway.getChannelById(e.getChannel()).block();
+				Chat chat = new DiscordChat(channel, null, null);
 
 				LocalDate execDate = e.getExecDate() != null ? e.getExecDate() : now.toLocalDate();
 				LocalTime execTime = e.getExecTime() != null ? e.getExecTime() : now.toLocalTime();
@@ -52,7 +56,6 @@ public class CommandExecutionScheduler extends Thread {
 				// day of week
 				int day = now.toLocalDate().getDayOfWeek().getValue();
 
-				if (cmd == null) return;
 				if (now.toLocalTime() != execTime) return;
 				if (now.toLocalDate() != execDate) return;
 
@@ -60,7 +63,7 @@ public class CommandExecutionScheduler extends Thread {
 					try {
 						MessageManager language = MessageManager.getMessages("legacy");
 						this.logger.info("Running command " +  cmdName);
-						cmd.handle(this.gateway.getSelf().block(), null, commandArgs, e.getGuild(), this.gateway, language);
+						this.proc.executeCommand(cmdName, self, chat, commandArgs, e.getGuild(), this.gateway, language);
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}

@@ -44,4 +44,48 @@ public final class Predicates {
     public static Predicate<Character> anyCharExcept(Character... chars) {
         return charEquals(chars).negate();
     }
+
+    /**
+     * Predicate that checks whether the input string equals ANY of the specified strings
+     * @param strings list of strings to check
+     * @return the predicate object
+     */
+    public static Predicate<String> stringEquals(List<String> strings) {
+        return strings::contains;
+    }
+
+    /**
+     * Predicate that checks whether the input string equals ANY of the specified strings
+     * @param strings arbitrary array of strings to check
+     * @return the predicate object
+     */
+    public static Predicate<String> stringEquals(String... strings) {
+        return stringEquals(List.of(strings));
+    }
+
+    /**
+     * Predicate that checks whether the input string equals ANYTHING EXCEPT one of the specified string
+     * @param strings list of strings to check
+     * @return the predicate object
+     */
+    public static Predicate<String> anyStringExcept(List<String> strings) {
+        return stringEquals(strings).negate();
+    }
+
+    /**
+     * Predicate that checks whether the input strings equals ANYTHING EXCEPT one of the specified strings
+     * @param strings arbitrary array of strings to check
+     * @return the predicate object
+     */
+    public static Predicate<String> anyStringExcept(String... strings) {
+        return stringEquals(strings).negate();
+    }
+
+    /**
+     * Predicate that checks whether the input string is a valid identifier
+     * @return the predicate object
+     */
+    public static Predicate<String> isValidIdentifier() {
+        return s -> s.chars().allMatch(Character::isJavaIdentifierPart);
+    }
 }

@@ -3,6 +3,7 @@ package xyz.rtsvk.alfax.util.text;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 /**
  * Class containing utility methods related to string processing
@@ -12,6 +13,8 @@ public class TextUtils {
 
 	/** Empty string constant */
 	public static final String EMPTY_STRING = "";
+	/** List of characters that can be used as quotation marks */
+	public static final List<Character> QUOTES = List.of('"', '\'');
 
 	/**
 	 * Generates a string containing random alphanumeric characters
@@ -83,5 +86,21 @@ public class TextUtils {
 			else return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Removes quotation marks from the string (if quoted), silently do nothing when the string is not quoted
+	 * @param string to remove quotes from
+	 * @return string with removed quotation marks
+	 */
+	public static String removeQuotes(String string) {
+		for (Character quoteMk : QUOTES) {
+			String quotes = quoteMk.toString();
+			if (string.startsWith(quotes) && string.endsWith(quotes)) {
+				int qLen = quotes.length();
+				return string.substring(qLen, string.length() - qLen);
+			}
+		}
+		return string;
 	}
 }

@@ -2,6 +2,7 @@ package xyz.rtsvk.alfax.util.statemachine;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -54,11 +55,16 @@ public class State<T> {
 	 * @return the new state
 	 */
 	public State<T> getTransition(T edge, State<T> fallback) {
-		return this.transitions.entrySet()
-				.stream()
-				.filter(e -> e.getKey().test(edge))
-				.map(Map.Entry::getValue)
-				.findFirst().orElse(fallback);
+		if (Objects.isNull(edge)) {
+			return fallback;
+		}
+
+		for (Map.Entry<Predicate<T>, State<T>> entry : this.transitions.entrySet()) {
+			if (entry.getKey().test(edge)) {
+				return entry.getValue();
+			}
+		}
+		return fallback;
 	}
 
 	/**

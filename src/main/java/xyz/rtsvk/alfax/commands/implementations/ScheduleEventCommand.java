@@ -1,8 +1,8 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -16,7 +16,7 @@ import java.util.List;
 public class ScheduleEventCommand implements ICommand {
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		// syntax: schedule <event name> <event time> <event description>
 		if (args.size() < 3) {
 			chat.sendMessage("Syntax: schedule <event name> <event time> <event description>");
@@ -29,7 +29,7 @@ public class ScheduleEventCommand implements ICommand {
 		String time = String.valueOf(t.toInstant().toEpochMilli()); // throws exception if invalid
 		String description = String.join(" ", args.subList(3, args.size()));
 
-		Database.addEvent(name, description, time, guildId);
+		Database.addEvent(name, description, time, guildState.getGuildId());
 		chat.sendMessage("Udalost pridana!");
 	}
 

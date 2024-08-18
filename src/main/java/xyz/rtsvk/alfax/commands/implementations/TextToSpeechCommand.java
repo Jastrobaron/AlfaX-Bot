@@ -2,9 +2,9 @@ package xyz.rtsvk.alfax.commands.implementations;
 
 import com.theokanning.openai.audio.CreateSpeechRequest;
 import com.theokanning.openai.service.OpenAiService;
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.FileManager;
@@ -25,7 +25,7 @@ public class TextToSpeechCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (this.config.getBoolean("openai-disabled") || this.config.getBoolean("openai-tts-disabled")) {
 			chat.sendMessage("This command is disabled by the administrator!");
 			return;

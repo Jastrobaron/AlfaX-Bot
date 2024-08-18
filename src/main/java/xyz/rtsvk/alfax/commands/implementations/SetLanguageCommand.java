@@ -1,8 +1,8 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -12,7 +12,7 @@ import java.util.List;
 
 public class SetLanguageCommand implements ICommand {
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (args.size() != 1) {
 			chat.sendMessage("Invalid number of arguments. Usage: " + this.getUsage());
 			return;

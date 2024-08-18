@@ -1,9 +1,9 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.PrivateChannel;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class PollEndCommand implements ICommand {
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (chat.getChannel() instanceof PrivateChannel pc) {
 			pc.createMessage("You can't create a poll in a private channel").block();
 			return;

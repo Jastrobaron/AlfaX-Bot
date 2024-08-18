@@ -1,9 +1,9 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
 import discord4j.core.spec.EmbedCreateSpec;
+import xyz.rtsvk.alfax.commands.GuildCommandState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.chat.Chat;
@@ -14,8 +14,8 @@ import java.util.List;
 
 public class MeCommand implements ICommand {
 	@Override
-	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
-		String name = guildId == null ? user.getUsername() : user.asMember(guildId).block().getDisplayName();
+	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+		String name = guildState == null ? user.getUsername() : user.asMember(guildState.getGuildId()).block().getDisplayName();
 		EmbedCreateSpec table = EmbedCreateSpec.builder()
 				.title(name)
 				.addField(language.getMessage("command.me.field-id"), user.getId().asString(), false)

@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine.impl;
+package xyz.rtsvk.alfax.util.statemachine.lex;
 
 import xyz.rtsvk.alfax.util.statemachine.State;
 import xyz.rtsvk.alfax.util.statemachine.Predicates;
@@ -26,10 +26,10 @@ public class SeparatedValuesStateMachine extends StringBufferStateMachine {
 
         // quoted strings
         for (Character quoteMk : quotes) {
-            State<Character> stringStart = new State<>("string_start_" + quoteMk, false);
-            State<Character> string = new State<>("string_" + quoteMk, false);
-            State<Character> stringEscape = new State<>("string_escape_" + quoteMk, false);
-            State<Character> stringEnd = new State<>("string_end_" + quoteMk, true);
+            State<Character> stringStart = createState("string_start_" + quoteMk, false);
+            State<Character> string = createState("string_" + quoteMk, false);
+            State<Character> stringEscape = createState("string_escape_" + quoteMk, false);
+            State<Character> stringEnd = createState("string_end_" + quoteMk, true);
 
             start.addTransition(Predicates.charEquals(quoteMk), stringStart);
             stringStart.addTransition(Predicates.charEquals(quoteMk), stringEnd);
@@ -39,15 +39,12 @@ public class SeparatedValuesStateMachine extends StringBufferStateMachine {
             string.addTransition(Predicates.charEquals(ESCAPE_CHAR), stringEscape);
             string.addTransition(Predicates.charEquals(quoteMk), stringEnd);
             stringEscape.addTransition(Predicates.anyCharExcept(), string);
-
-            this.addStates(stringStart, stringEnd, string, stringEscape);
         }
 
         start.addTransition(Predicates.charEquals(separatorChar), separator);
         start.addTransition(Predicates.anyCharExcept(quotes), entry);
-        entry.addTransition(Predicates.anyCharExcept(quotes), entry);
+        entry.addTransition(Predicates.anyCharExcept(quotes).and(Predicates.anyCharExcept(separatorChar)), entry);
 
         this.setInitialState(start);
-        this.addStates(start, separator, entry);
     }
 }
