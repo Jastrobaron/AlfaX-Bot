@@ -1,3 +1,5 @@
+package xyz.rtsvk.alfax;
+
 import org.junit.jupiter.api.Test;
 import xyz.rtsvk.alfax.util.text.TextUtils;
 
