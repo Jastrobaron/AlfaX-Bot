@@ -731,16 +731,16 @@ public class Database {
 		try {
 
 			String select = FormattedString
-					.create("SELECT `gpt_token_usage` FROM `guilds` WHERE `guild_id`='${id}';")
+					.create("SELECT `gpt_tokens_used` FROM `guilds` WHERE `guild_id`='${id}';")
 					.addParam("id", guildId.asString())
 					.build();
 			String update = FormattedString
-					.create("UPDATE `guilds` SET `gpt_token_usage` = `gpt_token_usage` + ${amount} WHERE `guild_id`='${id}';")
+					.create("UPDATE `guilds` SET `gpt_tokens_used` = `gpt_tokens_used` + ${amount} WHERE `guild_id`='${id}';")
 					.addParam("amount", tokenAmt)
 					.addParam("id", guildId.asString())
 					.build();
 			String insert = FormattedString
-					.create("INSERT INTO `guilds`(`guild_id`, `gpt_token_usage`) VALUES ('${id}', '${amount}');")
+					.create("INSERT INTO `guilds`(`guild_id`, `gpt_tokens_used`) VALUES ('${id}', '${amount}');")
 					.addParam("amount", tokenAmt)
 					.addParam("id", guildId.asString())
 					.build();

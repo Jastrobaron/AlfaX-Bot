@@ -10,6 +10,9 @@ import java.security.NoSuchAlgorithmException;
  */
 public class TextUtils {
 
+	/** Empty string constant */
+	public static final String EMPTY_STRING = "";
+
 	/**
 	 * Generates a string containing random alphanumeric characters
 	 * @param n string length
