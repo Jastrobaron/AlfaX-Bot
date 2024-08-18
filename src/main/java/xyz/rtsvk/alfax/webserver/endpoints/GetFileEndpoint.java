@@ -3,6 +3,7 @@ package xyz.rtsvk.alfax.webserver.endpoints;
 import discord4j.core.GatewayDiscordClient;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.FileManager;
+import xyz.rtsvk.alfax.webserver.IEndpoint;
 import xyz.rtsvk.alfax.webserver.Request;
 
 import java.io.*;

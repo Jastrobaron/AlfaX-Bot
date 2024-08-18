@@ -5,6 +5,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.spec.MessageCreateMono;
 import xyz.rtsvk.alfax.util.Database;
+import xyz.rtsvk.alfax.webserver.IEndpoint;
 import xyz.rtsvk.alfax.webserver.Request;
 
 import java.util.List;

@@ -4,16 +4,11 @@ import discord4j.core.GatewayDiscordClient;
 import xyz.rtsvk.alfax.mqtt.Mqtt;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.webserver.endpoints.*;
-import xyz.rtsvk.alfax.webserver.contentparsing.IContent;
-import xyz.rtsvk.alfax.webserver.contentparsing.CsvContent;
-import xyz.rtsvk.alfax.webserver.contentparsing.JsonContent;
 
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class WebServer extends Thread {
 
@@ -33,11 +28,6 @@ public class WebServer extends Thread {
 	private final Mqtt mqtt;
 
 	/**
-	 * Map containing content types
-	 */
-	private final Map<String, IContent> supportedContentTypes;
-
-	/**
 	 * List of endpoints
 	 */
 	private final List<IEndpoint> endpoints;
@@ -47,10 +37,6 @@ public class WebServer extends Thread {
 		this.setName("WebServer");
 		this.cfg = cfg;
 		this.client = client;
-
-		this.supportedContentTypes = new HashMap<>();
-		this.supportedContentTypes.put("application/json", new JsonContent());
-		this.supportedContentTypes.put("application/x-www-form-urlencoded", new CsvContent());
 
 		this.endpoints = new ArrayList<>();
 		this.endpoints.add(new ChannelMessageEndpoint());
@@ -104,10 +90,6 @@ public class WebServer extends Thread {
 
 	public Mqtt getMqtt() {
 		return this.mqtt;
-	}
-
-	public Map<String, IContent> getSupportedContentTypes() {
-		return this.supportedContentTypes;
 	}
 
 	public List<IEndpoint> getEndpoints() {

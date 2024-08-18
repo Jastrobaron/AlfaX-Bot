@@ -4,19 +4,29 @@ import discord4j.core.GatewayDiscordClient;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.Database;
 import xyz.rtsvk.alfax.util.Logger;
+import xyz.rtsvk.alfax.util.parsing.IParser;
+import xyz.rtsvk.alfax.util.parsing.json.JsonParser;
+import xyz.rtsvk.alfax.util.parsing.kv.URLEncodedParser;
 import xyz.rtsvk.alfax.util.text.FormattedString;
 import xyz.rtsvk.alfax.util.text.TextUtils;
 import xyz.rtsvk.alfax.webserver.endpoints.*;
-import xyz.rtsvk.alfax.webserver.contentparsing.IContent;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RequestHandler implements Runnable {
+
+	private static final Map<String, IParser> SUPPORTED_FORMATS = new HashMap<>();
+
+	static {
+		SUPPORTED_FORMATS.put("application/x-www-form-urlencoded", new URLEncodedParser());
+		SUPPORTED_FORMATS.put("application/json", new JsonParser());
+	}
 
 	private final Socket httpClient;
 	private final BufferedInputStream in;
@@ -24,7 +34,6 @@ public class RequestHandler implements Runnable {
 	private final GatewayDiscordClient client;
 	private final Logger logger;
 
-	private final Map<String, IContent> supportedContentTypes;
 	private final List<IEndpoint> actions;
 	private final Config cfg;
 	private final int timeout;
@@ -33,7 +42,6 @@ public class RequestHandler implements Runnable {
 		this.logger = new Logger(this.getClass());
 		this.cfg = server.getConfig();
 		this.client = server.getDiscordClient();
-		this.supportedContentTypes = server.getSupportedContentTypes();
 		this.actions = server.getEndpoints();
 		this.timeout = timeout;
 
@@ -46,7 +54,7 @@ public class RequestHandler implements Runnable {
 	public void run() {
 		try {
 			this.httpClient.setSoTimeout(this.timeout);
-			Request request = Request.parseRequest(this.in, this.supportedContentTypes);
+			Request request = Request.parseRequest(this.in, SUPPORTED_FORMATS);
 
 			if (request == null) {
 				this.out.println("HTTP/1.1 " + Response.BAD_REQUEST);
@@ -100,13 +108,16 @@ public class RequestHandler implements Runnable {
 			this.out.println();
 			this.out.println(result.message());
 			this.out.println();
-
-			this.out.close();
-			this.in.close();
-			this.httpClient.close();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				this.out.close();
+				this.in.close();
+				this.httpClient.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
