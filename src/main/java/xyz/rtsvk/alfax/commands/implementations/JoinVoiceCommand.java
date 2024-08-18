@@ -16,17 +16,15 @@ public class JoinVoiceCommand implements ICommand {
 	public void handle(User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		Member member = user.asMember(guildId).block();
 		if (member == null) {
-			chat.sendMessage("Neexistujes bratu :skull:");
+			chat.sendMessage(language.getMessage("command.join-voice.user-not-found"));
 			return;
 		}
 
 		VoiceState state = member.getVoiceState().block();
 		if (state == null) {
-			chat.sendMessage("Nie si vo voice roomke!");
+			chat.sendMessage(language.getMessage("command.join-voice.not-in-voice"));
 			return;
 		}
-
-
 	}
 
 	@Override
@@ -36,7 +34,7 @@ public class JoinVoiceCommand implements ICommand {
 
 	@Override
 	public String getDescription() {
-		return "Joins the voice channel you are currently in";
+		return "command.join-voice.description";
 	}
 
 	@Override

@@ -44,7 +44,10 @@ public class MqttPublishCommand implements ICommand {
 		}
 
 		if (args.size() < 2) {
-			chat.sendMessage("Usage: " + this.prefix + "mqtt <topic> <message>");
+			chat.sendMessage(language.getFormattedString("command.mqtt-publish.usage")
+					.addParam("prefix", this.prefix)
+					.addParam("usage", this.getUsage())
+					.build());
 			return;
 		}
 
@@ -66,7 +69,7 @@ public class MqttPublishCommand implements ICommand {
 
 	@Override
 	public String getDescription() {
-		return "Mqtt publish command";
+		return "command.mqtt-publish.description";
 	}
 
 	@Override

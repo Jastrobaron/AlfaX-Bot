@@ -18,9 +18,9 @@ public class MeCommand implements ICommand {
 		String name = guildId == null ? user.getUsername() : user.asMember(guildId).block().getDisplayName();
 		EmbedCreateSpec table = EmbedCreateSpec.builder()
 				.title(name)
-				.addField("ID:", user.getId().asString(), false)
+				.addField(language.getMessage("command.me.field-id"), user.getId().asString(), false)
 				.image(user.getAvatarUrl())
-				.addField("Kredity:", String.valueOf(Database.getUserCredits(user.getId())), false)
+				.addField(language.getMessage("command.me.field-credits"), String.valueOf(Database.getUserCredits(user.getId())), false)
 				.timestamp(Instant.now())
 				.build();
 		chat.sendMessage(table);
@@ -33,7 +33,7 @@ public class MeCommand implements ICommand {
 
 	@Override
 	public String getDescription() {
-		return "Zobrazí informácie o tebe";
+		return "command.me.description";
 	}
 
 	@Override

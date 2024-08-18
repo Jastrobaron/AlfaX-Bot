@@ -131,7 +131,8 @@ public class MathExpressionCommand implements ICommand {
 			else if (token.getType() == TokenType.SYMBOL) {
 				Symbol symbol = symtable.stream().filter(s -> s.getName().equals(token.getValue())).findFirst().orElse(null);
 				if (symbol == null) {
-					chat.sendMessage("```\nUnknown symbol: " + token.getValue() + "\n```");
+					chat.sendMessage(language.getFormattedString("command.math.unknown-symbol")
+							.addParam("symbol", token.getValue()).build());
 					return;
 				}
 				evalStack.push(symbol.getValue());
@@ -140,11 +141,13 @@ public class MathExpressionCommand implements ICommand {
 				String operator = token.getValue();
 				Symbol symbol = symtable.stream().filter(s -> s.getName().equals(operator)).findFirst().orElse(null);
 				if (symbol == null) {
-					chat.sendMessage("```\nUnknown operator: " + operator + "\n```");
+					chat.sendMessage(language.getFormattedString("command.math.unknown-operator")
+							.addParam("operator", operator).build());
 					return;
 				}
 				if (!symbol.eval(evalStack)) {
-					chat.sendMessage("```\nInvalid number of arguments for operator: " + operator + "\n```");
+					chat.sendMessage(language.getFormattedString("command.math.invalid-num-args")
+							.addParam("operator", operator).build());
 					return;
 				}
 			}
@@ -233,7 +236,7 @@ public class MathExpressionCommand implements ICommand {
 
 	@Override
 	public String getDescription() {
-		return "Calculate a math expression";
+		return "command.math.description";
 	}
 
 	@Override
