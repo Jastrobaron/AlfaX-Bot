@@ -3,6 +3,7 @@ package xyz.rtsvk.alfax.util.statemachine;
 import java.util.*;
 import java.util.function.Supplier;
 
+
 /**
  * Class representing a state machine
  * @author Jastrobaron
@@ -165,4 +166,5 @@ public abstract class StateMachine<E, P> {
 	 * @return result of the state machine analysis
 	 */
 	protected abstract P getResult();
+
 }

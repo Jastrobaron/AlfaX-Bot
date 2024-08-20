@@ -15,7 +15,6 @@ public class TextUtils {
 	public static final String EMPTY_STRING = "";
 	/** List of characters that can be used as quotation marks */
 	public static final List<Character> QUOTES = List.of('"', '\'');
-
 	/**
 	 * Generates a string containing random alphanumeric characters
 	 * @param n string length

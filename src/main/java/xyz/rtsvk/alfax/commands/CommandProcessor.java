@@ -60,7 +60,7 @@ public class CommandProcessor {
 				.findFirst().orElse(fallback);
 	}
 
-	public void executeCommand(String command, User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
+  public void executeCommand(String command, User user, Chat chat, List<String> args, Snowflake guildId, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		ICommand cmd = this.getCommandExecutor(command);
 		GuildCommandState guildState = this.getGuildState(guildId);
 		cmd.handle(user, chat, args, guildState, bot, language);
@@ -99,18 +99,6 @@ public class CommandProcessor {
 
 	public void setFallback(ICommand command) {
 		this.fallback = command;
-	}
-
-	public List<ICommand> getCommands() {
-		return this.commands.keySet().stream().toList();
-	}
-
-	public ICommand getFallback() {
-		return this.fallback;
-	}
-
-	public long getApplicationId() {
-		return this.appId;
 	}
 
 	public static List<String> splitCommandString(String input) {
