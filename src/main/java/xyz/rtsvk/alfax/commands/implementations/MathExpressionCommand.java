@@ -2,9 +2,9 @@ package xyz.rtsvk.alfax.commands.implementations;
 
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class MathExpressionCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		String rawExpression = args.stream().filter(s -> !s.contains("=")).collect(Collectors.joining(""));
 		Stack<Token> stack = new Stack<>();
 		Stack<Double> evalStack = new Stack<>();

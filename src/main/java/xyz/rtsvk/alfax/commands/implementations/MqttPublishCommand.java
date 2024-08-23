@@ -3,13 +3,13 @@ package xyz.rtsvk.alfax.commands.implementations;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.mqtt.Mqtt;
 import xyz.rtsvk.alfax.util.Config;
-import xyz.rtsvk.alfax.util.Database;
+import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.Logger;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.nio.charset.StandardCharsets;
@@ -37,7 +37,7 @@ public class MqttPublishCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (!Database.checkPermissions(user.getId().asString(), Database.PERMISSION_MQTT)) {
 			chat.sendMessage("Nemas opravnenie na pouzitie tohto prikazu.");
 			return;

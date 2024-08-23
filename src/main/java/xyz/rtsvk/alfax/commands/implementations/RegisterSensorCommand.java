@@ -2,10 +2,10 @@ package xyz.rtsvk.alfax.commands.implementations;
 
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.util.Database;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.storage.Database;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 import xyz.rtsvk.alfax.util.text.TextUtils;
 
@@ -20,7 +20,7 @@ public class RegisterSensorCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		// String key, String type, String unit, float min, float max
 
 		if (args.size() < 5) {

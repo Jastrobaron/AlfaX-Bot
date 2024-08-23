@@ -2,7 +2,8 @@ package xyz.rtsvk.alfax.commands;
 
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public interface ICommand {
 	 * @param language   language manager to get localized messages
 	 * @throws Exception if something goes wrong during command execution
 	 */
-	void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception;
+	void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception;
 
 	/**
 	 * @return the command name

@@ -1,8 +1,10 @@
-package xyz.rtsvk.alfax.util;
+package xyz.rtsvk.alfax.util.storage;
 
 import discord4j.common.util.Snowflake;
 import xyz.rtsvk.alfax.scheduler.Task;
 import xyz.rtsvk.alfax.tasks.Event;
+import xyz.rtsvk.alfax.util.Config;
+import xyz.rtsvk.alfax.util.Logger;
 import xyz.rtsvk.alfax.util.text.FormattedString;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
@@ -169,10 +171,10 @@ public class Database {
 		}
 	}
 
-	public static synchronized MessageManager getUserLanguage(Snowflake id, String defaultLang) {
+	public static synchronized MessageManager getUserLanguage(Snowflake id) {
 		MessageManager defaultLanguage = null;
 		try {
-			defaultLanguage = MessageManager.getMessages(defaultLang);
+			defaultLanguage = MessageManager.getDefaultLanguage();
 			if (!initialized) return defaultLanguage;
 
 			if (languageCache.containsKey(id))
@@ -191,7 +193,7 @@ public class Database {
 			else {
 				set.close();
 				st.close();
-				return MessageManager.getMessages(defaultLang);
+				return defaultLanguage;
 			}
 		}
 		catch (SQLException | IOException e) {

@@ -2,7 +2,7 @@ package xyz.rtsvk.alfax.webserver;
 
 import discord4j.core.GatewayDiscordClient;
 import xyz.rtsvk.alfax.util.Config;
-import xyz.rtsvk.alfax.util.Database;
+import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.Logger;
 import xyz.rtsvk.alfax.util.parsing.IParser;
 import xyz.rtsvk.alfax.util.parsing.json.JsonParser;

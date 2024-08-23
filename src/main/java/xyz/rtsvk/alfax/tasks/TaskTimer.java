@@ -3,7 +3,7 @@ package xyz.rtsvk.alfax.tasks;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.channel.MessageChannel;
-import xyz.rtsvk.alfax.util.Database;
+import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.Logger;
 
 import java.time.LocalDateTime;

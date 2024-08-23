@@ -5,9 +5,9 @@ import discord4j.core.object.entity.User;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.io.*;
@@ -30,7 +30,7 @@ public class TodayCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) {
 		String displayDate = LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL));
 
 		int month = LocalDate.now().getMonthValue()-1;

@@ -1,30 +1,29 @@
-package xyz.rtsvk.alfax.util.chat.impl;
+package xyz.rtsvk.alfax.util.chatcontext.impl;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.MessageChannel;
+import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.spec.EmbedCreateSpec;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 
-import java.util.Optional;
-
-public class DiscordChat implements Chat {
+public class DiscordChatContext implements IChatContext {
 
 	private final MessageChannel discordChannel;
-	private final Snowflake invokerMessageId;
+	private final Message invokerMessage;
 	private final String commandPrefix;
 	private Snowflake lastMessageId;
 
-	public DiscordChat(MessageChannel discordChannel, Snowflake invokerMessageId, String commandPrefix) {
+	public DiscordChatContext(MessageChannel discordChannel, Message invokerMessage, String commandPrefix) {
 		this.discordChannel = discordChannel;
-		this.invokerMessageId = invokerMessageId;
+		this.invokerMessage = invokerMessage;
 		this.commandPrefix = commandPrefix;
 		this.lastMessageId = null;
 	}
 
 	@Override
 	public Message sendMessage(String message) {
-		return sendMessage(message, this.invokerMessageId);
+		return sendMessage(message, this.invokerMessage.getId());
 	}
 
 	@Override
@@ -38,7 +37,7 @@ public class DiscordChat implements Chat {
 
 	@Override
 	public Message sendMessage(EmbedCreateSpec spec) {
-		return this.discordChannel.createMessage(spec).withMessageReference(this.invokerMessageId).block();
+		return this.discordChannel.createMessage(spec).withMessageReference(this.invokerMessage.getId()).block();
 	}
 
 	@Override
@@ -52,12 +51,17 @@ public class DiscordChat implements Chat {
 	}
 
 	@Override
-	public Snowflake getInvokerMessageId() {
-		return this.invokerMessageId;
+	public Message getInvokerMessage() {
+		return this.invokerMessage;
 	}
 
 	@Override
 	public String getCommandPrefix() {
 		return this.commandPrefix;
+	}
+
+	@Override
+	public boolean isPrivate() {
+		return this.discordChannel instanceof PrivateChannel;
 	}
 }

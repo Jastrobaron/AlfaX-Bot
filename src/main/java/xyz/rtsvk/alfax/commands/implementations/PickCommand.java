@@ -2,9 +2,9 @@ package xyz.rtsvk.alfax.commands.implementations;
 
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Random;
 
 public class PickCommand implements ICommand {
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) {
 		if (args.isEmpty()) {
 			chat.sendMessage("**Potrebujem minimalne 2 moznosti, aby som mohol rozhodnnut!**");
 			return;

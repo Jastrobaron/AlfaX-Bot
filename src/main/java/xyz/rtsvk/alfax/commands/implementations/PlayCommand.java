@@ -1,19 +1,35 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
-import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
+import xyz.rtsvk.alfax.util.lavaplayer.AudioLoadResultHandlerImpl;
+import xyz.rtsvk.alfax.util.lavaplayer.AudioPlayerManagerSingleton;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.util.List;
 
-public class PlayCommand implements ICommand {
+public class PlayCommand extends JoinVoiceCommand {
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+		if (!guildState.isVoiceConnected()) {
+			super.handle(user, chat, args, guildState, bot, language);
+		}
 
+		AudioPlayer player = guildState.getPlayer();
+		AudioTrack track = player.getPlayingTrack();
+		if (track != null && player.isPaused()) {
+			player.setPaused(false);
+			return;
+		}
+
+		String url = String.join(" ", args);
+		AudioPlayerManagerSingleton.get()
+				.loadItem(url, new AudioLoadResultHandlerImpl(chat, guildState, language));
 	}
 
 	@Override

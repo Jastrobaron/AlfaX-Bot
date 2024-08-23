@@ -1,13 +1,24 @@
 package xyz.rtsvk.alfax.util.statemachine.input;
 
+import xyz.rtsvk.alfax.util.statemachine.StateMachine;
 import xyz.rtsvk.alfax.util.statemachine.lex.StringBufferStateMachine;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
 
+/**
+ * Factory class for creating {@link Supplier <T>} instances that are then used
+ * to provide input for {@link StateMachine}
+ * @author Jastrobaron
+ */
 public class InputSuppliers {
 
+    /**
+     * Creates an input supplier from the supplied string
+     * @param input string to create the supplier from
+     * @return the created supplier
+     */
     public static Supplier<Character> fromString(String input) {
         return new Supplier<>() {
             private int index = 0;
@@ -22,6 +33,11 @@ public class InputSuppliers {
         };
     }
 
+    /**
+     * Creates an input supplier from the supplied {@link InputStream}
+     * @param in stream to read
+     * @return the created supplier
+     */
     public static Supplier<Character> fromInputStream(InputStream in) {
         return () -> {
             try {
@@ -33,6 +49,11 @@ public class InputSuppliers {
         };
     }
 
+    /**
+     * Creates an input supplier from another {@link StateMachine}
+     * @param stateMachine to read from
+     * @return the created supplier
+     */
     public static Supplier<String> fromStateMachine(StringBufferStateMachine stateMachine) {
         return stateMachine::getNext;
     }

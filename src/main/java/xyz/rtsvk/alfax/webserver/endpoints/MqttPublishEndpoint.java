@@ -4,7 +4,7 @@ import discord4j.core.GatewayDiscordClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import xyz.rtsvk.alfax.mqtt.Mqtt;
-import xyz.rtsvk.alfax.util.Database;
+import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.webserver.IEndpoint;
 import xyz.rtsvk.alfax.webserver.Request;
 

@@ -4,11 +4,11 @@ import com.theokanning.openai.audio.CreateSpeechRequest;
 import com.theokanning.openai.service.OpenAiService;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Config;
-import xyz.rtsvk.alfax.util.FileManager;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.storage.FileManager;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.io.*;
@@ -25,7 +25,7 @@ public class TextToSpeechCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (this.config.getBoolean("openai-disabled") || this.config.getBoolean("openai-tts-disabled")) {
 			chat.sendMessage("This command is disabled by the administrator!");
 			return;
@@ -39,7 +39,7 @@ public class TextToSpeechCommand implements ICommand {
 
 		AtomicReference<String> messageContent = new AtomicReference<>(message.toString());
 		if (messageContent.get().isEmpty()) {
-			chat.getChannel().getMessageById(chat.getInvokerMessageId()).block().getReferencedMessage().ifPresent(msg -> messageContent.set(msg.getContent()));
+			chat.getInvokerMessage().getReferencedMessage().ifPresent(msg -> messageContent.set(msg.getContent()));
 		}
 
 		OpenAiService service = new OpenAiService(
@@ -80,7 +80,7 @@ public class TextToSpeechCommand implements ICommand {
 		chat.getChannel().createMessage(spec -> {
 			try {
 				spec.addFile("speech.mp3", new FileInputStream(speechFile));
-				spec.setMessageReference(chat.getInvokerMessageId());
+				spec.setMessageReference(chat.getInvokerMessage().getId());
 			} catch (FileNotFoundException e) {
 				throw new RuntimeException(e);
 			}

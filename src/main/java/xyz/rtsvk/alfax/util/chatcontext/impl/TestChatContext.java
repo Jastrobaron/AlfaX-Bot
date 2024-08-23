@@ -1,20 +1,22 @@
-package xyz.rtsvk.alfax.util.chat.impl;
+package xyz.rtsvk.alfax.util.chatcontext.impl;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.spec.EmbedCreateSpec;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestChat implements Chat {
+public class TestChatContext implements IChatContext {
 
-	private List<String> messages;
+	private final List<String> messages;
+	private final boolean isPrivate;
 
-	public TestChat() {
+	public TestChatContext(boolean isPrivate) {
 		this.messages = new ArrayList<>();
+		this.isPrivate = isPrivate;
 	}
 
 	@Override
@@ -40,7 +42,7 @@ public class TestChat implements Chat {
 	}
 
 	@Override
-	public Snowflake getInvokerMessageId() {
+	public Message getInvokerMessage() {
 		return null;
 	}
 
@@ -52,5 +54,10 @@ public class TestChat implements Chat {
 	@Override
 	public String getCommandPrefix() {
 		return null;
+	}
+
+	@Override
+	public boolean isPrivate() {
+		return this.isPrivate;
 	}
 }

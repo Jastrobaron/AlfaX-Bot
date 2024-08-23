@@ -1,8 +1,5 @@
 package xyz.rtsvk.alfax;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -14,7 +11,7 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import xyz.rtsvk.alfax.commands.CommandAdapter;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 import xyz.rtsvk.alfax.commands.implementations.*;
 import xyz.rtsvk.alfax.mqtt.Mqtt;
@@ -24,10 +21,13 @@ import xyz.rtsvk.alfax.reactions.impl.BookmarkReactionCallback;
 import xyz.rtsvk.alfax.scheduler.CommandExecutionScheduler;
 import xyz.rtsvk.alfax.tasks.TaskTimer;
 import xyz.rtsvk.alfax.util.*;
-import xyz.rtsvk.alfax.util.chat.Chat;
-import xyz.rtsvk.alfax.util.chat.impl.DiscordChat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
+import xyz.rtsvk.alfax.util.chatcontext.impl.DiscordChatContext;
+import xyz.rtsvk.alfax.util.guildstate.GuildStateRegister;
 import xyz.rtsvk.alfax.util.ratelimit.RateLimitExceededException;
 import xyz.rtsvk.alfax.util.ratelimit.RateLimiter;
+import xyz.rtsvk.alfax.util.storage.Database;
+import xyz.rtsvk.alfax.util.storage.FileManager;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 import xyz.rtsvk.alfax.util.text.TextUtils;
 import xyz.rtsvk.alfax.webserver.WebServer;
@@ -86,20 +86,18 @@ public class Main {
 		final String prefix = config.getString("prefix");
 		logger.info("Bot's prefix is " + prefix + " (length=" + prefix.length() + ")");
 		final DiscordClient client = DiscordClient.create(config.getString("token"));
-		final GatewayDiscordClient gateway = client.login().blockOptional().orElseThrow(Exception::new);
-		final User self = gateway.getSelf().blockOptional().orElseThrow(Exception::new);
+		final GatewayDiscordClient gateway = client.login().blockOptional().orElseThrow(IllegalStateException::new);
+		final User self = gateway.getSelf().blockOptional().orElseThrow(IllegalStateException::new);
 		final String botMention = self.getMention();
-		final String defaultLanguage = config.getString("default-language");
-		final boolean forceDefaultLanguage = config.getBoolean("force-default-language");
 
-		AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
-		AudioSourceManagers.registerRemoteSources(playerManager);
-
-		CommandProcessor proc = new CommandProcessor(gateway, playerManager);
+		MessageManager.setDefaultLanguage(config.getString("default-language"));
+		MessageManager.setForceDefaultLanguage(config.getBoolean("force-default-language"));
+		CommandProcessor proc = new CommandProcessor(gateway);
 		proc.setFallback(new CommandAdapter() {
 			@Override
-			public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) {
-				chat.sendMessage(language.getFormattedString("command.not-found").addParam("prefix", prefix).build());
+			public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) {
+				chat.sendMessage(language.getFormattedString("command.not-found")
+						.addParam("prefix", prefix).build());
 			}
 		});
 
@@ -134,6 +132,10 @@ public class Main {
 		proc.registerCommand(new ServiceInfoCommand(() -> Thread.getAllStackTraces().keySet()));
 		proc.registerCommand(new GetEmojiCommand());
 		proc.registerCommand(new PlayCommand());
+		proc.registerCommand(new PauseCommand());
+		proc.registerCommand(new JoinVoiceCommand());
+		proc.registerCommand(new SkipCommand());
+		proc.registerCommand(new LeaveCommand());
 
 		ServiceWatcher watcher = new ServiceWatcher();
 		Thread scheduler = new CommandExecutionScheduler(gateway, proc);
@@ -196,10 +198,8 @@ public class Main {
 				if (!msg.startsWith(botMention) && !msg.startsWith(prefix)) return;
 				final List<String> tokenList = CommandProcessor.splitCommandString(msg);
 				final String first = tokenList.get(0);
-				MessageManager language = forceDefaultLanguage
-						? MessageManager.getMessages(defaultLanguage)
-						: Database.getUserLanguage(user.getId(), defaultLanguage);
-				Chat chat = new DiscordChat(channel, message.getId(), prefix);
+				MessageManager language = Database.getUserLanguage(user.getId());
+				IChatContext chat = new DiscordChatContext(channel, message, prefix);
 
 				if (language == null) {
 					logger.error(TextUtils.format("Failed to load language for user <@${0}>", user.getId().asString()));
@@ -215,7 +215,7 @@ public class Main {
 				Thread cmdThread = new Thread(() -> {
 					try {
 						commandRatelimiter.lock();
-						proc.executeCommand(cmdName, user, chat, tokenList.subList(1, tokenList.size()), guildId, gateway, language);
+						proc.executeCommand(cmdName, user, chat, tokenList.subList(1, tokenList.size()), guildId, language);
 					} catch (RateLimitExceededException ree) {
 						chat.sendMessage(language.getMessage("general.error.rate-limit-exceeded"));
 					} catch (Exception e) {
@@ -244,19 +244,13 @@ public class Main {
 					return;
 				}
 
-				Optional<Message> messageOpt = event.getMessage().blockOptional();
-				Optional<User> userOpt = event.getUser().blockOptional();
-				if (messageOpt.isPresent() && userOpt.isPresent()) {
-					Message message = messageOpt.get();
-					User user = userOpt.get();
-					MessageManager language = forceDefaultLanguage
-							? MessageManager.getMessages(defaultLanguage)
-							: Database.getUserLanguage(user.getId(), defaultLanguage);
-					long reactionCount = message.getReactions().stream()
-							.filter(r -> r.getEmoji().equals(emoji))
-							.count();
-					cb.get().handle(message, user, language, reactionCount);
-				}
+				Message message = event.getMessage().blockOptional().orElseThrow(IllegalStateException::new);
+				User user = event.getUser().blockOptional().orElseThrow(IllegalStateException::new);
+				MessageManager language = Database.getUserLanguage(user.getId());
+				long reactionCount = message.getReactions().stream()
+						.filter(r -> r.getEmoji().equals(emoji))
+						.count();
+				cb.get().handle(message, user, language, reactionCount);
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}

@@ -1,6 +1,6 @@
 package xyz.rtsvk.alfax.util.text;
 
-import xyz.rtsvk.alfax.util.FileManager;
+import xyz.rtsvk.alfax.util.storage.FileManager;
 import xyz.rtsvk.alfax.util.Logger;
 
 import java.io.FileInputStream;
@@ -18,9 +18,12 @@ public class MessageManager {
 
 	/** Logger */
 	private static final Logger logger = new Logger(MessageManager.class);
-
 	/** Message manager cache */
 	private static final Map<String, MessageManager> cache = new HashMap<>();
+	/** ID of the default language */
+	private static MessageManager defaultLanguage;
+	/** Flag to specify whether to force the use of the default language */
+	private static boolean forceDefaultLanguage;
 
 	/** The message map */
 	private final Map<String, String> messages;
@@ -70,7 +73,9 @@ public class MessageManager {
 	 * @throws IllegalArgumentException if the language file was not found
 	 */
 	public static MessageManager getMessages(String language) throws IOException {
-		if (cache.containsKey(language)) {
+		if (forceDefaultLanguage) {
+			return defaultLanguage;
+		} else if (cache.containsKey(language)) {
 			return cache.get(language);
 		}
 
@@ -109,6 +114,31 @@ public class MessageManager {
 
 		cache.put(language, manager);
 		return manager;
+	}
+
+	/**
+	 * Get the default language pack
+	 * @return the default language pack
+	 */
+	public static MessageManager getDefaultLanguage() {
+		return defaultLanguage;
+	}
+
+	/**
+	 * Set the default language
+	 * @param language the default language
+	 * @throws IOException if an error occurs when loading the default language
+	 */
+	public static void setDefaultLanguage(String language) throws IOException {
+		defaultLanguage = getMessages(language);
+	}
+
+	/**
+	 * Set whether to force the default language to be used
+	 * @param force whether to force the use of the default language
+	 */
+	public static void setForceDefaultLanguage(boolean force) {
+		forceDefaultLanguage = force;
 	}
 
 	/**

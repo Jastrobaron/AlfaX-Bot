@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util;
+package xyz.rtsvk.alfax.util.storage;
 
 import java.io.File;
 import java.io.IOException;

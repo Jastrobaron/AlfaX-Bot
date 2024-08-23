@@ -5,10 +5,10 @@ import com.theokanning.openai.image.Image;
 import com.theokanning.openai.service.OpenAiService;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import xyz.rtsvk.alfax.commands.GuildCommandState;
+import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
 import xyz.rtsvk.alfax.util.Config;
-import xyz.rtsvk.alfax.util.chat.Chat;
+import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 
 import java.time.Duration;
@@ -22,7 +22,7 @@ public class GenerateImageCommand implements ICommand {
 	}
 
 	@Override
-	public void handle(User user, Chat chat, List<String> args, GuildCommandState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
+	public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) throws Exception {
 		if (this.config.getBoolean("openai-disabled") || this.config.getBoolean("openai-image-disabled")) {
 			chat.sendMessage(language.getMessage("command.generate-image.disabled"));
 			return;
