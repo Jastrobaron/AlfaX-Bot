@@ -8,29 +8,28 @@ import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import xyz.rtsvk.alfax.commands.CommandAdapter;
+import xyz.rtsvk.alfax.services.ServiceManager;
 import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 import xyz.rtsvk.alfax.commands.implementations.*;
-import xyz.rtsvk.alfax.mqtt.Mqtt;
+import xyz.rtsvk.alfax.services.mqtt.MqttService;
 import xyz.rtsvk.alfax.reactions.IReactionCallback;
 import xyz.rtsvk.alfax.reactions.ReactionCallbackRegister;
 import xyz.rtsvk.alfax.reactions.impl.BookmarkReactionCallback;
-import xyz.rtsvk.alfax.scheduler.CommandExecutionScheduler;
+import xyz.rtsvk.alfax.services.scheduler.CommandExecutionSchedulerService;
 import xyz.rtsvk.alfax.tasks.TaskTimer;
 import xyz.rtsvk.alfax.util.*;
 import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.chatcontext.impl.DiscordChatContext;
-import xyz.rtsvk.alfax.util.guildstate.GuildStateRegister;
 import xyz.rtsvk.alfax.util.ratelimit.RateLimitExceededException;
 import xyz.rtsvk.alfax.util.ratelimit.RateLimiter;
 import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.storage.FileManager;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 import xyz.rtsvk.alfax.util.text.TextUtils;
-import xyz.rtsvk.alfax.webserver.WebServer;
+import xyz.rtsvk.alfax.services.webserver.WebServerService;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -137,28 +136,17 @@ public class Main {
 		proc.registerCommand(new SkipCommand());
 		proc.registerCommand(new LeaveCommand());
 
-		ServiceWatcher watcher = new ServiceWatcher();
-		Thread scheduler = new CommandExecutionScheduler(gateway, proc);
-		Thread webserver = new WebServer(config, gateway);
-		Mqtt mqtt = new Mqtt(config, gateway);
-
-		// scheduler
-		if (config.getBoolean("scheduler-enabled")) {
-			scheduler.setUncaughtExceptionHandler(watcher);
-			scheduler.start();
+		ServiceManager serviceMgr = new ServiceManager();
+		if (config.getBoolean("scheduler-enabled")) {		// scheduler
+			serviceMgr.addService(() -> new CommandExecutionSchedulerService(gateway, proc));
 		}
-
-		// webhook server
-		if (config.getBoolean("webserver-enabled")) {
-			webserver.setUncaughtExceptionHandler(watcher);
-			webserver.start();
+		if (config.getBoolean("webserver-enabled")) {		// webhook server
+			serviceMgr.addService(() -> new WebServerService(config, gateway));
 		}
-
-		// MQTT Subscribe Client
-		if (config.getBoolean("mqtt-enabled")) {
-			mqtt.setUncaughtExceptionHandler(watcher);
-			mqtt.start();
+		if (config.getBoolean("mqtt-enabled")) { 			// MQTT Subscribe Client
+			serviceMgr.addService(() -> new MqttService(config, gateway));
 		}
+		serviceMgr.start();
 
 		// task timer
 		TaskTimer timer = new TaskTimer(gateway, 1000);
@@ -208,7 +196,7 @@ public class Main {
 				}
 
 				String cmdName = first.startsWith(prefix) ? first.substring(prefix.length()) : commandOnTag;
-				String messageToLog = (channel instanceof PrivateChannel)
+				String messageToLog = chat.isPrivate()
 						? TextUtils.format("<private message of length ${0}>", msg.length())
 						: msg;
 				logger.info(TextUtils.format("Command received: ${0} (user=${1}, channel=${2})", messageToLog, user.getUsername(), channel.getId().asString()));
@@ -259,20 +247,11 @@ public class Main {
 		AtomicBoolean shutdownRequested = new AtomicBoolean(false);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			shutdownRequested.set(true);
-			if (scheduler.isAlive()) {
-				scheduler.interrupt();
-			}
-			if (webserver.isAlive()) {
-				webserver.interrupt();
-			}
-			if (mqtt.isAlive()) {
-				mqtt.interrupt();
-			}
+			serviceMgr.interrupt();
 			timer.setEnabled(false);
 			if (config.getBoolean("force-shutdown-on-exit")) {
 				runningCommandExecutors.forEach(Thread::interrupt);
-			}
-			else { // wait for all command executors to finish
+			} else { // wait for all command executors to finish
 				while (runningCommandExecutors.stream().anyMatch(Thread::isAlive));
 			}
 			Database.close();

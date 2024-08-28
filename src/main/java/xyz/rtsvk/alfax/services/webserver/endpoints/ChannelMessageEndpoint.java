@@ -1,12 +1,12 @@
-package xyz.rtsvk.alfax.webserver.endpoints;
+package xyz.rtsvk.alfax.services.webserver.endpoints;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.spec.MessageCreateMono;
 import xyz.rtsvk.alfax.util.storage.Database;
-import xyz.rtsvk.alfax.webserver.IEndpoint;
-import xyz.rtsvk.alfax.webserver.Request;
+import xyz.rtsvk.alfax.services.webserver.IEndpoint;
+import xyz.rtsvk.alfax.services.webserver.Request;
 
 import java.util.List;
 

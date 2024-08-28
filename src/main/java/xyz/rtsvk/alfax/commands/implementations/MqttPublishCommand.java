@@ -5,7 +5,7 @@ import discord4j.core.object.entity.User;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.commands.ICommand;
-import xyz.rtsvk.alfax.mqtt.Mqtt;
+import xyz.rtsvk.alfax.services.mqtt.MqttService;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.Logger;
@@ -17,7 +17,7 @@ import java.util.List;
 
 public class MqttPublishCommand implements ICommand {
 
-	private Mqtt client;
+	private MqttService client;
 	private final Logger logger;
 	private final String prefix;
 
@@ -30,7 +30,7 @@ public class MqttPublishCommand implements ICommand {
 			return;
 		}
 
-		this.client = new Mqtt(cfg, null);
+		this.client = new MqttService(cfg, null);
 		this.client.setClientId("MQTT-Publish-Command");
 		this.client.setDoSubscribe(false);
 		this.client.start();
@@ -58,7 +58,7 @@ public class MqttPublishCommand implements ICommand {
 		this.logger.info("Published message to topic '" + topic + "': " + message);
 	}
 
-	public Mqtt getClient() {
+	public MqttService getClient() {
 		return client;
 	}
 

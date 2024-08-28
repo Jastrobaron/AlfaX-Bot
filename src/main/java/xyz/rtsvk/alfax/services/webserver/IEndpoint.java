@@ -1,7 +1,7 @@
-package xyz.rtsvk.alfax.webserver;
+package xyz.rtsvk.alfax.services.webserver;
 
 import discord4j.core.GatewayDiscordClient;
-import xyz.rtsvk.alfax.webserver.endpoints.ActionResult;
+import xyz.rtsvk.alfax.services.webserver.endpoints.ActionResult;
 
 import java.util.List;
 

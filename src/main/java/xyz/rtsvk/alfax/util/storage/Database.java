@@ -1,7 +1,7 @@
 package xyz.rtsvk.alfax.util.storage;
 
 import discord4j.common.util.Snowflake;
-import xyz.rtsvk.alfax.scheduler.Task;
+import xyz.rtsvk.alfax.services.scheduler.Task;
 import xyz.rtsvk.alfax.tasks.Event;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.Logger;

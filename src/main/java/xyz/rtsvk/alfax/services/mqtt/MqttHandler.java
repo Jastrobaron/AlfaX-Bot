@@ -1,11 +1,11 @@
-package xyz.rtsvk.alfax.mqtt;
+package xyz.rtsvk.alfax.services.mqtt;
 
 import discord4j.core.GatewayDiscordClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import xyz.rtsvk.alfax.mqtt.actions.Action;
-import xyz.rtsvk.alfax.mqtt.actions.UnknownTopicAction;
+import xyz.rtsvk.alfax.services.mqtt.actions.Action;
+import xyz.rtsvk.alfax.services.mqtt.actions.UnknownTopicAction;
 import xyz.rtsvk.alfax.util.Logger;
 
 import java.util.Map;

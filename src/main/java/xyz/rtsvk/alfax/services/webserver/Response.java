@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.webserver;
+package xyz.rtsvk.alfax.services.webserver;
 
 public class Response {
 

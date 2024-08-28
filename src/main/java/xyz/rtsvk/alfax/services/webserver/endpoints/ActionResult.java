@@ -1,6 +1,6 @@
-package xyz.rtsvk.alfax.webserver.endpoints;
+package xyz.rtsvk.alfax.services.webserver.endpoints;
 
-import xyz.rtsvk.alfax.webserver.Response;
+import xyz.rtsvk.alfax.services.webserver.Response;
 
 public record ActionResult(String status, String contentType, String message) {
 

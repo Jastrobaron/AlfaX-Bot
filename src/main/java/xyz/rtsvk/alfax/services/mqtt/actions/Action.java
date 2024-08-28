@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.mqtt.actions;
+package xyz.rtsvk.alfax.services.mqtt.actions;
 
 import discord4j.core.GatewayDiscordClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;

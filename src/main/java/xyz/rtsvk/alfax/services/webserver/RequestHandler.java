@@ -1,6 +1,8 @@
-package xyz.rtsvk.alfax.webserver;
+package xyz.rtsvk.alfax.services.webserver;
 
 import discord4j.core.GatewayDiscordClient;
+import xyz.rtsvk.alfax.services.webserver.endpoints.ActionResult;
+import xyz.rtsvk.alfax.services.webserver.endpoints.EndpointNotFoundEndpoint;
 import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.Logger;
@@ -9,7 +11,6 @@ import xyz.rtsvk.alfax.util.parsing.json.JsonParser;
 import xyz.rtsvk.alfax.util.parsing.kv.URLEncodedParser;
 import xyz.rtsvk.alfax.util.text.FormattedString;
 import xyz.rtsvk.alfax.util.text.TextUtils;
-import xyz.rtsvk.alfax.webserver.endpoints.*;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class RequestHandler implements Runnable {
 	private final Config cfg;
 	private final int timeout;
 
-	public RequestHandler(WebServer server, Socket httpClient, int timeout) throws IOException {
+	public RequestHandler(WebServerService server, Socket httpClient, int timeout) throws IOException {
 		this.logger = new Logger(this.getClass());
 		this.cfg = server.getConfig();
 		this.client = server.getDiscordClient();
