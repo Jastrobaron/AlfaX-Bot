@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util;
+package xyz.rtsvk.alfax.services;
 
 import java.util.LinkedList;
 import java.util.Queue;
