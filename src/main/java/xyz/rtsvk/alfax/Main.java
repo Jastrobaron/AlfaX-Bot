@@ -133,6 +133,8 @@ public class Main {
 		proc.registerCommand(new JoinVoiceCommand());
 		proc.registerCommand(new SkipCommand());
 		proc.registerCommand(new LeaveCommand());
+		proc.registerCommand(new MusicQueueCommand());
+		proc.registerCommand(new SkipAllCommand());
 
 		ServiceManager serviceMgr = new ServiceManager();
 		if (config.getBoolean("scheduler-enabled")) {		// scheduler

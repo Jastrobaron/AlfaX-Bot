@@ -108,4 +108,8 @@ public class TrackScheduler extends AudioEventAdapter {
 	public AudioPlayer getAudioPlayer() {
 		return this.guildState.getPlayer();
 	}
+
+	public Queue<AudioTrack> getTrackQueue() {
+		return this.queue;
+	}
 }
