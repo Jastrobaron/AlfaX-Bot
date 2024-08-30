@@ -23,8 +23,6 @@ import xyz.rtsvk.alfax.tasks.TaskTimer;
 import xyz.rtsvk.alfax.util.*;
 import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.chatcontext.impl.DiscordChatContext;
-import xyz.rtsvk.alfax.util.ratelimit.RateLimitExceededException;
-import xyz.rtsvk.alfax.util.ratelimit.RateLimiter;
 import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.storage.FileManager;
 import xyz.rtsvk.alfax.util.text.MessageManager;
@@ -91,7 +89,7 @@ public class Main {
 
 		MessageManager.setDefaultLanguage(config.getString("default-language"));
 		MessageManager.setForceDefaultLanguage(config.getBoolean("force-default-language"));
-		CommandProcessor proc = new CommandProcessor(gateway);
+		CommandProcessor proc = new CommandProcessor(gateway, config);
 		proc.setFallback(new CommandAdapter() {
 			@Override
 			public void handle(User user, IChatContext chat, List<String> args, GuildState guildState, GatewayDiscordClient bot, MessageManager language) {
@@ -154,19 +152,15 @@ public class Main {
 
 		final String commandOnTag = config.getString("command-on-tag");
 		logger.info("Command on tag: " + commandOnTag);
-		List<Thread> runningCommandExecutors = new ArrayList<>();
 		Map<Snowflake, List<String>> lastMessageCount = new HashMap<>();
 		boolean spammerEnabled = config.getBoolean("spammer-enabled");
-		RateLimiter commandRatelimiter = new RateLimiter(config.getInt("command-rate-limit"));
 		gateway.on(MessageCreateEvent.class).subscribe(event -> {
 			try {
 				final Message message = event.getMessage();
 				final User user = message.getAuthor().orElseThrow(Exception::new);
 				if (user.isBot()) return;
 
-				final Snowflake guildId = message.getGuildId().orElse(null);
-				final MessageChannel channel = message.getChannel().block();
-				assert channel != null;
+				final MessageChannel channel = message.getChannel().blockOptional().orElseThrow(IllegalStateException::new);
 				final String msg = message.getContent().trim();
 
 				if (spammerEnabled) {
@@ -183,39 +177,26 @@ public class Main {
 					}
 				}
 
-				if (!msg.startsWith(botMention) && !msg.startsWith(prefix)) return;
-				final List<String> tokenList = CommandProcessor.splitCommandString(msg);
-				final String first = tokenList.get(0);
-				MessageManager language = Database.getUserLanguage(user.getId());
-				IChatContext chat = new DiscordChatContext(channel, message, prefix);
-
-				if (language == null) {
-					logger.error(TextUtils.format("Failed to load language for user <@${0}>", user.getId().asString()));
-					chat.sendMessage("A fatal error has occured. Please contact the administrator.");
+				String command;
+				if (msg.startsWith(botMention)) {
+					command = msg.replace(botMention, commandOnTag);
+				} else if (msg.startsWith(prefix)) {
+					command = msg.substring(prefix.length());
+				} else {
 					return;
 				}
 
-				String cmdName = first.startsWith(prefix) ? first.substring(prefix.length()) : commandOnTag;
+				IChatContext chat = new DiscordChatContext(channel, message, prefix);
 				String messageToLog = chat.isPrivate()
-						? TextUtils.format("<private message of length ${0}>", msg.length())
-						: msg;
+						? TextUtils.format("<private message of length ${0}>", command.length())
+						: command;
 				logger.info(TextUtils.format("Command received: ${0} (user=${1}, channel=${2})", messageToLog, user.getUsername(), channel.getId().asString()));
-				Thread cmdThread = new Thread(() -> {
-					try {
-						commandRatelimiter.lock();
-						proc.executeCommand(cmdName, user, chat, tokenList.subList(1, tokenList.size()), guildId, language);
-					} catch (RateLimitExceededException ree) {
-						chat.sendMessage(language.getMessage("general.error.rate-limit-exceeded"));
-					} catch (Exception e) {
-						e.printStackTrace(System.out);
-						chat.sendMessage("**:x: " + e.getMessage() + "**");
-					} finally {
-						commandRatelimiter.unlock();
-					}
-				});
-				cmdThread.start();
-				cmdThread.setName("CommandExecutor-" + cmdName + "-" + System.currentTimeMillis());
-				runningCommandExecutors.add(cmdThread);
+				try {
+					proc.executeCommand(chat, command);
+				}  catch (Exception e) {
+					e.printStackTrace(System.out);
+					chat.sendMessage("**:x: " + e.getMessage() + "**");
+				}
 			} catch (Exception e) {
 				e.printStackTrace(System.out);
 			}
@@ -248,12 +229,8 @@ public class Main {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			shutdownRequested.set(true);
 			serviceMgr.interrupt();
+			proc.cleanup();
 			timer.setEnabled(false);
-			if (config.getBoolean("force-shutdown-on-exit")) {
-				runningCommandExecutors.forEach(Thread::interrupt);
-			} else { // wait for all command executors to finish
-				while (runningCommandExecutors.stream().anyMatch(Thread::isAlive));
-			}
 			Database.close();
 			FileManager.close();
 			gateway.logout().block();

@@ -5,13 +5,17 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.ApplicationCommandData;
 import discord4j.rest.service.ApplicationService;
+import xyz.rtsvk.alfax.util.Config;
+import xyz.rtsvk.alfax.util.Logger;
 import xyz.rtsvk.alfax.util.guildstate.GuildState;
 import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.guildstate.GuildStateRegister;
+import xyz.rtsvk.alfax.util.ratelimit.*;
 import xyz.rtsvk.alfax.util.statemachine.Predicates;
 import xyz.rtsvk.alfax.util.statemachine.lex.SeparatedValuesStateMachine;
 import xyz.rtsvk.alfax.util.statemachine.lex.StringBufferStateMachine;
 import xyz.rtsvk.alfax.util.statemachine.input.InputSuppliers;
+import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 import xyz.rtsvk.alfax.util.text.TextUtils;
 
@@ -27,25 +31,37 @@ public class CommandProcessor {
 
 	/** Command argument separator */
 	public static final Character SEPARATOR = ' ';
+	/** Logger for this class */
+	private static final Logger logger = new Logger(CommandProcessor.class);
 
 	/** Map for storing registered command-command data pairs. Command data is null for legacy commands. */
 	private final Map<ICommand, ApplicationCommandData> commands;
+	/** List containing the command executors that are currently running */
+	private final List<Thread> runningCommandExecutors;
 	/** Discord client providing access to the Discord database */
 	private final GatewayDiscordClient gateway;
-	/** Fallback command to execute when the user enters an unknown command. */
-	private ICommand fallback = null;
+	/** Startup configuration */
+	private final Config config;
+	/** Semaphore for rate limiting. If a rate limit is exceeded, a {@link RateLimitExceededException} is thrown*/
+	private final RateLimiter rateLimiter;
 	/** Application ID */
 	private final long appId;
+	/** Fallback command to execute when the user enters an unknown command. */
+	private ICommand fallback;
 
 	/**
 	 * Constructor
 	 * @param gateway to access the Discord API
 	 */
-	public CommandProcessor(GatewayDiscordClient gateway) {
-		this.commands = new HashMap<>();
+	public CommandProcessor(GatewayDiscordClient gateway, Config config) {
 		this.gateway = gateway;
+		this.config = config;
+		this.commands = new HashMap<>();
+		this.runningCommandExecutors = new ArrayList<>();
 		this.appId = this.gateway.getRestClient().getApplicationId().blockOptional()
 				.orElseThrow(() -> new IllegalStateException("Could not get application ID"));
+		this.fallback = new CommandAdapter();
+		this.rateLimiter = new RateLimiter(config.getInt("command-rate-limit"));
     }
 
 	/**
@@ -84,6 +100,48 @@ public class CommandProcessor {
 		GuildState guildState = GuildStateRegister.getGuildState(guildId);
 		guildState.setLastCommandChat(chat);
 		cmd.handle(user, chat, args, guildState, this.gateway, language);
+	}
+
+	/**
+	 * Executes a command
+	 * @param chat context to execute the command in
+	 * @param commandString to execute
+	 */
+	public void executeCommand(IChatContext chat, String commandString) {
+		Snowflake guildId = chat.getInvokerMessage().getGuildId().orElse(null);
+		GuildState guildState = GuildStateRegister.getGuildState(guildId);
+		if (guildState != null) {
+			guildState.setLastCommandChat(chat);
+		}
+
+		User invoker = chat.getInvokerMessage().getAuthor().orElseThrow(IllegalStateException::new);
+		MessageManager language = Database.getUserLanguage(invoker.getId());
+		if (language == null) {
+			logger.error(TextUtils.format("Failed to load language for user <@${0}>", invoker.getId().asString()));
+			chat.sendMessage("A fatal error has occured. Please contact the administrator.");
+			return;
+		}
+
+		List<String> splitCmdStr = splitCommandString(commandString);
+		String cmdName = splitCmdStr.get(0);
+		List<String> args = splitCmdStr.subList(1, splitCmdStr.size());
+		ICommand executor = this.getCommandExecutor(cmdName);
+
+		Thread cmdRunner = new Thread(() -> {
+			try {
+				this.rateLimiter.lock();
+				executor.handle(invoker, chat, args, guildState, this.gateway, language);
+			} catch (RateLimitExceededException ree) {
+				chat.sendMessage(language.getMessage("general.error.rate-limit-exceeded"));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			} finally {
+				this.rateLimiter.unlock();
+			}
+		});
+		cmdRunner.setName("CommandExecutor-" + cmdName + "-" + System.currentTimeMillis());
+		this.runningCommandExecutors.add(cmdRunner);
+		cmdRunner.start();
 	}
 
 	/**
@@ -126,6 +184,9 @@ public class CommandProcessor {
 	 * @param command the command executor
 	 */
 	public void setFallback(ICommand command) {
+		if (command == null) {
+			throw new IllegalArgumentException("Fallback command executor cannot be set to null, please use CommandAdapter instead.");
+		}
 		this.fallback = command;
 	}
 
@@ -145,5 +206,13 @@ public class CommandProcessor {
 				.map(String::trim)
 				.map(TextUtils::removeQuotes)
 				.toList();
+	}
+
+	public void cleanup() {
+		if (config.getBoolean("force-shutdown-on-exit")) {
+			runningCommandExecutors.forEach(Thread::interrupt);
+		} else { // wait for all command executors to finish
+			while (runningCommandExecutors.stream().anyMatch(Thread::isAlive));
+		}
 	}
 }
