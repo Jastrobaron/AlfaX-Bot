@@ -22,6 +22,7 @@ public class SkipAllCommand implements ICommand {
         TrackScheduler scheduler = guildState.getTrackScheduler();
         scheduler.getTrackQueue().clear();
         scheduler.skipCurrentTrack();
+	chat.sendMessage(language.getMessage("command.skipall.queue-cleared"));
     }
 
     @Override
