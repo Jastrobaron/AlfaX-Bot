@@ -1,12 +1,10 @@
-package xyz.rtsvk.alfax.util.statemachine.lex;
-
-import xyz.rtsvk.alfax.util.statemachine.StateMachine;
+package xyz.rtsvk.alfax.util.statemachine;
 
 /**
  * Class utilising a {@link StringBuffer} to store the token currently being created
  * @author Jastrobaron
  */
-public class StringBufferStateMachine extends StateMachine<Character, String> {
+public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, Token<T>> {
 
     /** Buffer to store characters that have been read */
     private final StringBuffer buffer;
@@ -14,7 +12,7 @@ public class StringBufferStateMachine extends StateMachine<Character, String> {
     /**
      * Class constructor
      */
-    public StringBufferStateMachine() {
+    public GenericLexicalAnalyzer() {
         super();
         this.buffer = new StringBuffer();
     }
@@ -25,8 +23,8 @@ public class StringBufferStateMachine extends StateMachine<Character, String> {
     }
 
     @Override
-    protected String getResult() {
-        return this.buffer.toString();
+    protected Token<T> getResult() {
+        return new Token<>(getTokenType(), this.buffer.toString());
     }
 
     @Override
@@ -34,4 +32,6 @@ public class StringBufferStateMachine extends StateMachine<Character, String> {
         super.reset();
         this.buffer.setLength(0);
     }
+
+    protected abstract T getTokenType();
 }

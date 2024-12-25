@@ -12,9 +12,9 @@ import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.guildstate.GuildStateRegister;
 import xyz.rtsvk.alfax.util.ratelimit.*;
 import xyz.rtsvk.alfax.util.statemachine.Predicates;
-import xyz.rtsvk.alfax.util.statemachine.lex.SeparatedValuesStateMachine;
-import xyz.rtsvk.alfax.util.statemachine.lex.StringBufferStateMachine;
-import xyz.rtsvk.alfax.util.statemachine.input.InputSuppliers;
+import xyz.rtsvk.alfax.util.statemachine.Token;
+import xyz.rtsvk.alfax.util.statemachine.Inputs;
+import xyz.rtsvk.alfax.util.statemachine.lexer.CommandLexer;
 import xyz.rtsvk.alfax.util.storage.Database;
 import xyz.rtsvk.alfax.util.text.MessageManager;
 import xyz.rtsvk.alfax.util.text.TextUtils;
@@ -196,15 +196,14 @@ public class CommandProcessor {
 	 * @return list of strings to be then parsed as a command
 	 */
 	public static List<String> splitCommandString(String input) {
-		StringBufferStateMachine fsm = new SeparatedValuesStateMachine(SEPARATOR, QUOTES);
-		fsm.setInputSupplier(InputSuppliers.fromString(input));
+		CommandLexer fsm = new CommandLexer(SEPARATOR, QUOTES);
+		fsm.setInput(Inputs.fromString(input));
 		fsm.reset();
 
 		// FIXME: This is just a workaround, because the state machine appends separators to the beginning of entries.
 		return fsm.getAll().stream()
-				.filter(Predicates.anyStringExcept(SEPARATOR.toString()))
-				.map(String::trim)
-				.map(TextUtils::removeQuotes)
+				.filter(Predicates.anyExcept(SEPARATOR.toString()))
+				.map(Token::value)
 				.toList();
 	}
 
@@ -212,7 +211,7 @@ public class CommandProcessor {
 		if (config.getBoolean("force-shutdown-on-exit")) {
 			runningCommandExecutors.forEach(Thread::interrupt);
 		} else { // wait for all command executors to finish
-			while (runningCommandExecutors.stream().anyMatch(Thread::isAlive));
+			while (runningCommandExecutors.stream().anyMatch(Thread::isAlive)) ;
 		}
 	}
 }

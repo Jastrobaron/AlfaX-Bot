@@ -31,6 +31,7 @@ public class GetEmojiCommand implements ICommand {
 		String emoji;
 		if (arg.startsWith("<:") && arg.endsWith(">")) {
 			emoji = arg.substring(2, arg.length() - 1);
+			chat.sendMessage(emoji);
 			server.getEmojis()
 					.filter(e -> e.getId().equals(Snowflake.of(emoji.substring(emoji.indexOf(":") + 1))))
 					.map(GuildEmoji::getImageUrl)

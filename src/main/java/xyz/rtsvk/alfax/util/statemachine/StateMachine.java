@@ -3,7 +3,6 @@ package xyz.rtsvk.alfax.util.statemachine;
 import java.util.*;
 import java.util.function.Supplier;
 
-
 /**
  * Class representing a state machine
  * @author Jastrobaron
@@ -13,24 +12,22 @@ import java.util.function.Supplier;
 public abstract class StateMachine<E, P> {
 
 	/** Error state */
-	private final State<E> ERROR = new State<>("#ERR_STATE", false);
-	/** Set of states */
-	private final Set<State<E>> states;
-	/** Buffer to temporarily store symbols that caused the state machine to fall into {@link #ERROR} state */
-	private final Queue<E> pushbackBuffer;
+	private final State<E> ERROR = new ErrorState<>();
 	/** Current state of the state machine */
 	private State<E> cstate;
 	/** Initial state of the state machine */
 	private State<E> start;
 	/** Supplier of input symbols */
 	private Supplier<E> inputSupplier;
+	/** Pushback edge */
+	private E pushbackBuffer;
 
 	/**
 	 * Class constructor
 	 */
 	public StateMachine() {
-		this.states = new HashSet<>();
-		this.pushbackBuffer = new LinkedList<>();
+		this.start = new InitialState<>();
+		this.pushbackBuffer = null;
 		this.inputSupplier = null;
 	}
 
@@ -41,8 +38,8 @@ public abstract class StateMachine<E, P> {
 	public TransitionResult transition() {
 		E edge = getInput();
  		State<E> nstate = this.cstate.getTransition(edge, ERROR);
-		if (nstate.equals(ERROR)) {
-			this.pushbackBuffer.offer(edge);
+		if (nstate instanceof ErrorState<E>) {
+			this.pushbackBuffer = edge;
 			if (this.cstate.isFinite()) {
 				return TransitionResult.SUCCESS;
 			} else {
@@ -73,10 +70,12 @@ public abstract class StateMachine<E, P> {
 	private E getInput() {
 		if (this.inputSupplier == null) {
 			throw new IllegalStateException("Input supplier is not set!");
-		} else if (this.pushbackBuffer.isEmpty()) {
+		} else if (this.pushbackBuffer == null) {
 			return this.inputSupplier.get();
 		} else {
-			return this.pushbackBuffer.poll();
+			E retval = this.pushbackBuffer;
+			this.pushbackBuffer = null;
+			return retval;
 		}
 	}
 
@@ -106,32 +105,11 @@ public abstract class StateMachine<E, P> {
 	}
 
 	/**
-	 * Create a new state within the state machine
-	 * @param name of the state
-	 * @param finite whether the state is to be interpreted as finite
-	 * @return the created state object
+	 * Get the initial state of the state machine
+	 * @return the initial state object
 	 */
-	public State<E> createState(String name, boolean finite) {
-		State<E> state = new State<>(name, finite);
-		this.addStates(state);
-		return state;
-	}
-
-	/**
-	 * Add new states to the state machine
-	 * @param states to add
-	 */
-	@SafeVarargs
-	public final void addStates(State<E>... states) {
-		this.states.addAll(Arrays.asList(states));
-	}
-
-	/**
-	 * Set the initial state of the state machine
-	 * @param state to set as the initial state
-	 */
-	public void setInitialState(State<E> state) {
-		this.start = state;
+	public State<E> getInitialState() {
+		return this.start;
 	}
 
 	/**
@@ -144,7 +122,7 @@ public abstract class StateMachine<E, P> {
 	/**
 	 * @return current state of the state machine
 	 */
-	public State<E> getCurrentState() {
+	protected final State<E> getCurrentState() {
 		return this.cstate;
 	}
 
@@ -152,7 +130,7 @@ public abstract class StateMachine<E, P> {
 	 * Set the input symbol supplier
 	 * @param inputSupplier function that supplies the input symbols
 	 */
-	public void setInputSupplier(Supplier<E> inputSupplier) {
+	public void setInput(Supplier<E> inputSupplier) {
 		this.inputSupplier = inputSupplier;
 	}
 
@@ -163,8 +141,8 @@ public abstract class StateMachine<E, P> {
 	protected abstract void onTransition(E edge);
 
 	/**
+	 * Returns the product
 	 * @return result of the state machine analysis
 	 */
 	protected abstract P getResult();
-
 }

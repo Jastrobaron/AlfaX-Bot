@@ -183,6 +183,8 @@ public class Main {
 				if (msg.startsWith(botMention)) {
 					command = msg.replace(botMention, commandOnTag);
 				} else if (msg.startsWith(prefix)) {
+					// prefix is severed because there is going to be
+					// a command line interface implemented in the future
 					command = msg.substring(prefix.length());
 				} else {
 					return;

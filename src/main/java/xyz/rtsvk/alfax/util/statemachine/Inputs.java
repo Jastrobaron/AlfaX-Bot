@@ -1,7 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine.input;
-
-import xyz.rtsvk.alfax.util.statemachine.StateMachine;
-import xyz.rtsvk.alfax.util.statemachine.lex.StringBufferStateMachine;
+package xyz.rtsvk.alfax.util.statemachine;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +9,7 @@ import java.util.function.Supplier;
  * to provide input for {@link StateMachine}
  * @author Jastrobaron
  */
-public class InputSuppliers {
+public class Inputs {
 
     /**
      * Creates an input supplier from the supplied string
@@ -54,7 +51,7 @@ public class InputSuppliers {
      * @param stateMachine to read from
      * @return the created supplier
      */
-    public static Supplier<String> fromStateMachine(StringBufferStateMachine stateMachine) {
+    public static Supplier<String> fromStateMachine(GenericLexicalAnalyzer stateMachine) {
         return stateMachine::getNext;
     }
 

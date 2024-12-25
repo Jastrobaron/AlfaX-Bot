@@ -49,6 +49,46 @@ public class State<T> {
 	}
 
 	/**
+	 * Adds a new self transition
+	 * @param edge used to transition
+	 */
+	public void addTransition(T edge) {
+		this.addTransition(edge, this);
+	}
+
+	/**
+	 * Adds a new self predicate transition
+	 * @param predicate used to transition
+	 */
+	public void addTransition(Predicate<T> predicate) {
+		this.addTransition(predicate, this);
+	}
+
+	/**
+	 * Creates a new state and add an outbound transition to it
+	 * @param edge predicate to make the transition
+	 * @param name of the new state
+	 * @param finite whether the state is finite
+	 * @return the created state
+	 */
+	public State<T> createOutboundState(T edge, String name, boolean finite) {
+		return this.createOutboundState(Predicates.equal(edge), name, finite);
+	}
+
+	/**
+	 * Creates a new state and add an outbound transition to it
+	 * @param edge to make the transition
+	 * @param name of the new state
+	 * @param finite whether the state is finite
+	 * @return the created state
+	 */
+	public State<T> createOutboundState(Predicate<T> edge, String name, boolean finite) {
+		State<T> state = new State<>(name, finite);
+		this.addTransition(edge, state);
+		return state;
+	}
+
+	/**
 	 * Gets the new state to transition to
 	 * @param edge used to transition
 	 * @param fallback to fall back to when an invalid edge is supplied (to be used with {@link StateMachine#ERROR})
