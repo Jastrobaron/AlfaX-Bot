@@ -5,12 +5,17 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.PrivateChannel;
 import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.core.spec.MessageCreateMono;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Mono;
 import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 
 public class DiscordChatContext implements IChatContext {
 
 	private final MessageChannel discordChannel;
 	private final Message invokerMessage;
+	private final Publisher<Void> msgSent;
 	private final String commandPrefix;
 	private Snowflake lastMessageId;
 
@@ -18,6 +23,7 @@ public class DiscordChatContext implements IChatContext {
 		this.discordChannel = discordChannel;
 		this.invokerMessage = invokerMessage;
 		this.commandPrefix = commandPrefix;
+		this.msgSent = Subscriber::onComplete;
 		this.lastMessageId = null;
 	}
 
@@ -29,6 +35,7 @@ public class DiscordChatContext implements IChatContext {
 	@Override
 	public Message sendMessage(String message, Snowflake reference) {
 		Message msg = this.discordChannel.createMessage(message).withMessageReference(reference).block();
+		this.msgSent.subscribe(null);
 		if (msg != null) {
 			this.lastMessageId = msg.getId();
 		}
@@ -37,7 +44,13 @@ public class DiscordChatContext implements IChatContext {
 
 	@Override
 	public Message sendMessage(EmbedCreateSpec spec) {
+		this.msgSent.subscribe(null);
 		return this.discordChannel.createMessage(spec).withMessageReference(this.invokerMessage.getId()).block();
+	}
+
+	@Override
+	public void startTyping() {
+		this.discordChannel.typeUntil(this.msgSent).subscribe();
 	}
 
 	@Override

@@ -37,6 +37,11 @@ public class TestChatContext implements IChatContext {
 	}
 
 	@Override
+	public void startTyping() {
+
+	}
+
+	@Override
 	public Snowflake getLastMessageId() {
 		return Snowflake.of(this.messages.size() - 1);
 	}
@@ -60,4 +65,5 @@ public class TestChatContext implements IChatContext {
 	public boolean isPrivate() {
 		return this.isPrivate;
 	}
+
 }
