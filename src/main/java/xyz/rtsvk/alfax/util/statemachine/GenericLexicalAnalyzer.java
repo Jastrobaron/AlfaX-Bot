@@ -2,9 +2,10 @@ package xyz.rtsvk.alfax.util.statemachine;
 
 /**
  * Class utilising a {@link StringBuffer} to store the token currently being created
+ * @param <T> lexeme type enum
  * @author Jastrobaron
  */
-public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, Token<T>> {
+public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, Lexeme<T>> {
 
     /** Buffer to store characters that have been read */
     private final StringBuffer buffer;
@@ -13,7 +14,6 @@ public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, 
      * Class constructor
      */
     public GenericLexicalAnalyzer() {
-        super();
         this.buffer = new StringBuffer();
     }
 
@@ -23,8 +23,8 @@ public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, 
     }
 
     @Override
-    protected Token<T> getResult() {
-        return new Token<>(getTokenType(), this.buffer.toString());
+    protected Lexeme<T> getResult() {
+        return new Lexeme<>(getTokenType(this.getCurrentState()), this.buffer.toString());
     }
 
     @Override
@@ -33,5 +33,10 @@ public abstract class GenericLexicalAnalyzer<T> extends StateMachine<Character, 
         this.buffer.setLength(0);
     }
 
-    protected abstract T getTokenType();
+    /**
+     * Returns the token type based on the state the automaton finished in
+     * @param state state the automaton finished in
+     * @return the token (lexeme) type
+     */
+    protected abstract T getTokenType(State<Character> state);
 }

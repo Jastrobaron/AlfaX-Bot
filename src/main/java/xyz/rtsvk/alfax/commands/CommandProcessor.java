@@ -12,7 +12,7 @@ import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 import xyz.rtsvk.alfax.util.guildstate.GuildStateRegister;
 import xyz.rtsvk.alfax.util.ratelimit.*;
 import xyz.rtsvk.alfax.util.statemachine.Predicates;
-import xyz.rtsvk.alfax.util.statemachine.Token;
+import xyz.rtsvk.alfax.util.statemachine.Lexeme;
 import xyz.rtsvk.alfax.util.statemachine.Inputs;
 import xyz.rtsvk.alfax.util.statemachine.lexer.CommandLexer;
 import xyz.rtsvk.alfax.util.storage.Database;
@@ -202,8 +202,8 @@ public class CommandProcessor {
 
 		// FIXME: This is just a workaround, because the state machine appends separators to the beginning of entries.
 		return fsm.getAll().stream()
-				.filter(Predicates.anyExcept(SEPARATOR.toString()))
-				.map(Token::value)
+				.filter(Predicates.anyExcept(SEPARATOR))
+				.map(Lexeme::value)
 				.toList();
 	}
 

@@ -13,22 +13,24 @@ public abstract class StateMachine<E, P> {
 
 	/** Error state */
 	private final State<E> ERROR = new ErrorState<>();
+	/** Initial state of the state machine */
+	private final State<E> START = new InitialState<>();;
 	/** Current state of the state machine */
 	private State<E> cstate;
-	/** Initial state of the state machine */
-	private State<E> start;
 	/** Supplier of input symbols */
 	private Supplier<E> inputSupplier;
 	/** Pushback edge */
 	private E pushbackBuffer;
+	/** Flag to indicate whether the end of input stream was reached */
+	private boolean endReached;
 
 	/**
 	 * Class constructor
 	 */
 	public StateMachine() {
-		this.start = new InitialState<>();
 		this.pushbackBuffer = null;
 		this.inputSupplier = null;
+		this.endReached = false;
 	}
 
 	/**
@@ -36,7 +38,11 @@ public abstract class StateMachine<E, P> {
 	 * @return {@code true} if the transition attempt lead to the error state, {@code false} otherwise
 	 */
 	public TransitionResult transition() {
-		E edge = getInput();
+		E edge = readInput();
+		if (edge == null) {
+			this.endReached = true;
+			return TransitionResult.SUCCESS;
+		}
  		State<E> nstate = this.cstate.getTransition(edge, ERROR);
 		if (nstate instanceof ErrorState<E>) {
 			this.pushbackBuffer = edge;
@@ -65,17 +71,17 @@ public abstract class StateMachine<E, P> {
 	}
 
 	/**
-	 * @return symbol from the input buffer
+	 * @return symbol from the input buffer, primarily from the pushback buffer
 	 */
-	private E getInput() {
+	private E readInput() {
 		if (this.inputSupplier == null) {
 			throw new IllegalStateException("Input supplier is not set!");
 		} else if (this.pushbackBuffer == null) {
 			return this.inputSupplier.get();
 		} else {
-			E retval = this.pushbackBuffer;
+			E bufferVal = this.pushbackBuffer;
 			this.pushbackBuffer = null;
-			return retval;
+			return bufferVal;
 		}
 	}
 
@@ -109,14 +115,15 @@ public abstract class StateMachine<E, P> {
 	 * @return the initial state object
 	 */
 	public State<E> getInitialState() {
-		return this.start;
+		return this.START;
 	}
 
 	/**
 	 * Resets the state machine to its initial state
 	 */
 	public void reset() {
-		this.cstate = this.start;
+		this.cstate = this.START;
+		this.endReached = false;
 	}
 
 	/**
@@ -132,6 +139,14 @@ public abstract class StateMachine<E, P> {
 	 */
 	public void setInput(Supplier<E> inputSupplier) {
 		this.inputSupplier = inputSupplier;
+	}
+
+	/**
+	 * Predicate to check whether the end of input stream was reached
+	 * @return {@code true} if the end of input stream was reached, {@code false} otherwise
+	 */
+	public boolean isEndReached() {
+		return this.endReached;
 	}
 
 	/**

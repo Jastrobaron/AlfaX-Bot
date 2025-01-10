@@ -45,14 +45,4 @@ public class Inputs {
             }
         };
     }
-
-    /**
-     * Creates an input supplier from another {@link StateMachine}
-     * @param stateMachine to read from
-     * @return the created supplier
-     */
-    public static Supplier<String> fromStateMachine(GenericLexicalAnalyzer stateMachine) {
-        return stateMachine::getNext;
-    }
-
 }

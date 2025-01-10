@@ -7,4 +7,4 @@ package xyz.rtsvk.alfax.util.statemachine;
  * @param <T> token type enum
  * @author Jastrobaron
  */
-public record Token<T>(T type, String value) {}
+public record Lexeme<T>(T type, String value) {}

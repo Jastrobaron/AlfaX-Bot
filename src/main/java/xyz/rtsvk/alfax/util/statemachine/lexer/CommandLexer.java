@@ -1,10 +1,9 @@
 package xyz.rtsvk.alfax.util.statemachine.lexer;
 
-import xyz.rtsvk.alfax.util.statemachine.GenericLexicalAnalyzer;
-import xyz.rtsvk.alfax.util.statemachine.Predicates;
-import xyz.rtsvk.alfax.util.statemachine.State;
+import xyz.rtsvk.alfax.util.statemachine.*;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Lexical analyzer for the command processor
@@ -12,6 +11,8 @@ import java.util.List;
  */
 public class CommandLexer extends GenericLexicalAnalyzer<CommandLexer.CmdPart> {
 
+	/** Non-uoted identifier state */
+	private static final String ST_IDENT = "CommandLexer_Ident";
 	/** Quoted identifier state */
 	private static final String ST_QUOTED_IDENT = "CommandLexer_QuotedIdent";
 	/** End of the quoted identifier */
@@ -23,20 +24,27 @@ public class CommandLexer extends GenericLexicalAnalyzer<CommandLexer.CmdPart> {
 		State<Character> start = getInitialState();
 		start.createOutboundState(Predicates.equal(separator), ST_SEPARATOR, true);
 
-		State<Character> quoted = start.createOutboundState(Predicates.anyExcept(quotes), ST_QUOTED_IDENT, false);
+		State<Character> quoted = start.createOutboundState(Predicates.equal(quotes), ST_QUOTED_IDENT, false);
 		quoted.addTransition(Predicates.anyExcept(quotes));
 		quoted.createOutboundState(Predicates.equal(quotes), ST_QUOTED_END, true);
+
+		Predicate<Character> match = Predicates.anyExcept(separator).and(Predicates.anyExcept(quotes));
+		State<Character> ident = start.createOutboundState(match, ST_IDENT, true);
+		ident.addTransition(Predicates.anyExcept());
 	}
 
 	@Override
-	protected CmdPart getTokenType() {
-		CmdPart part = switch (this.getCurrentState().getName()) {
-			case ST_QUOTED_END -> CmdPart.IDENT;
-			case ST_SEPARATOR -> CmdPart.SEPARATOR;
-			default -> throw new IllegalStateException("Unexpected state: " + this.getCurrentState().getName());
-		};
+	protected CmdPart getTokenType(State<Character> currState) {
+		if (this.isEndReached()) {     // end of character stream reached
+			return CmdPart.CMD_END;
+		}
 
-		return part;
+		return switch (currState.getName()) {
+			case ST_QUOTED_IDENT -> CmdPart.IDENT;
+			case ST_QUOTED_END -> CmdPart.QUOTED_IDENT;
+			case ST_SEPARATOR -> CmdPart.SEPARATOR;
+			default -> throw new LexerException(currState);
+		};
 	}
 
 	public enum CmdPart {
