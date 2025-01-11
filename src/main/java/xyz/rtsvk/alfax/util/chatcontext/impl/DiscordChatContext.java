@@ -18,6 +18,7 @@ public class DiscordChatContext implements IChatContext {
 	private final Publisher<Void> msgSent;
 	private final String commandPrefix;
 	private Snowflake lastMessageId;
+	private boolean isTyping;
 
 	public DiscordChatContext(MessageChannel discordChannel, Message invokerMessage, String commandPrefix) {
 		this.discordChannel = discordChannel;
@@ -25,6 +26,7 @@ public class DiscordChatContext implements IChatContext {
 		this.commandPrefix = commandPrefix;
 		this.msgSent = Subscriber::onComplete;
 		this.lastMessageId = null;
+		this.isTyping = false;
 	}
 
 	@Override
@@ -35,7 +37,10 @@ public class DiscordChatContext implements IChatContext {
 	@Override
 	public Message sendMessage(String message, Snowflake reference) {
 		Message msg = this.discordChannel.createMessage(message).withMessageReference(reference).block();
-		this.msgSent.subscribe(null);
+		if (this.isTyping) {
+			this.msgSent.subscribe(null);
+			this.isTyping = false;
+		}
 		if (msg != null) {
 			this.lastMessageId = msg.getId();
 		}
@@ -44,12 +49,16 @@ public class DiscordChatContext implements IChatContext {
 
 	@Override
 	public Message sendMessage(EmbedCreateSpec spec) {
-		this.msgSent.subscribe(null);
+		if (this.isTyping) {
+			this.msgSent.subscribe(null);
+			this.isTyping = false;
+		}
 		return this.discordChannel.createMessage(spec).withMessageReference(this.invokerMessage.getId()).block();
 	}
 
 	@Override
 	public void startTyping() {
+		this.isTyping = true;
 		this.discordChannel.typeUntil(this.msgSent).subscribe();
 	}
 
