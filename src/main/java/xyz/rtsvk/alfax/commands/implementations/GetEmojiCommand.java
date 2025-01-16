@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 public class GetEmojiCommand implements ICommand {
 
-	private static final Pattern EMOJI_STRING_REGEX = Pattern.compile("<:[a-zA-z]+:[0-9]+>");
+	private static final Pattern EMOJI_STRING_REGEX = Pattern.compile("<:[A-Z\\[\\]^_`a-z]+:[0-9]+>");
 	private static final Pattern EMOJI_ID_REGEX = Pattern.compile(":(\\d+)>");
 
 	@Override
