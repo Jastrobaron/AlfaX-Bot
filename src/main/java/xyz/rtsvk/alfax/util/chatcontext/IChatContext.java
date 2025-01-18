@@ -9,9 +9,11 @@ public interface IChatContext {
 	Message sendMessage(String message);
 	Message sendMessage(String message, Snowflake reference);
 	Message sendMessage(EmbedCreateSpec spec);
+	void startTyping();
 	Snowflake getLastMessageId();
 	Message getInvokerMessage();
 	MessageChannel getChannel();
 	String getCommandPrefix();
 	boolean isPrivate();
+
 }

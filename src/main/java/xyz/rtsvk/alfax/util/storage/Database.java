@@ -152,12 +152,13 @@ public class Database {
 
 		try {
 			String sql = FormattedString.create()
-					.setFormat("INSERT INTO `auth`(`id`, `auth_key`, `permissions`, `credits`, `language`) VALUES ('${id}', '${key}', '${perms}', '${creds}', '${lang}');")
+					.setFormat("INSERT INTO `auth`(`id`, `auth_key`, `permissions`, `credits`, `language`, `tokens_used`) VALUES ('${id}', '${key}', '${perms}', '${creds}', '${lang}', '${tokens_used}');")
 					.addParam("id", id)
 					.addParam("key", hash)
 					.addParam("perms", permissions)
 					.addParam("creds", 3000)
 					.addParam("lang", "legacy")
+					.addParam("tokens_used", 0)
 					.build();
 
 			Statement st = conn.createStatement();

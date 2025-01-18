@@ -68,6 +68,7 @@ public class ChatGPTCommand implements ICommand {
 		}
 		history.sort((a,b) -> -1);  // reverse the list
 
+		chat.startTyping();
 		StringBuilder output = new StringBuilder();
 		OpenAiService service = new OpenAiService(
 				this.config.getString("openai-api-key"),
