@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.parsing.kv;
+package xyz.rtsvk.alfax.util.parsing.topdown.kv;
 
 /**
  * Class for parsing properties files

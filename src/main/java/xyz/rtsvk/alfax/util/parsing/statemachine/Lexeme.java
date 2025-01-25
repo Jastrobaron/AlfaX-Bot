@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 /**
  * Record representing the created token

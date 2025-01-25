@@ -1,9 +1,9 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 /**
  * Class to unambiguously represent the error state within the state machine
  *
- * @see xyz.rtsvk.alfax.util.statemachine.State
+ * @see State
  * @param <E> edge type
  * @author Jastrobaron
  */

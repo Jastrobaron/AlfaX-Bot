@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 /**
  * Class utilising a {@link StringBuffer} to store the token currently being created

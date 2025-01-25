@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.parsing.kv;
+package xyz.rtsvk.alfax.util.parsing.topdown.kv;
 
 import java.util.HashMap;
 import java.util.Map;

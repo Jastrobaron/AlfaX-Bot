@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -37,7 +37,7 @@ public abstract class StateMachine<E, P> {
 	 * Transition to a new state
 	 * @return {@code true} if the transition attempt lead to the error state, {@code false} otherwise
 	 */
-	public TransitionResult transition() {
+	private TransitionResult transition() {
 		E edge = readInput();
 		if (edge == null) {
 			this.endReached = true;
@@ -147,6 +147,13 @@ public abstract class StateMachine<E, P> {
 	 */
 	public boolean isEndReached() {
 		return this.endReached;
+	}
+
+	/**
+	 * @return {@code true} if a valid input supplier is set, {@code false} otherwise
+	 */
+	public boolean hasInput() {
+		return Objects.nonNull(this.inputSupplier);
 	}
 
 	/**

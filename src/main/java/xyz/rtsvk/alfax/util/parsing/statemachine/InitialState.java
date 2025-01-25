@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 /**
  * Class representing the initial state of the state machine

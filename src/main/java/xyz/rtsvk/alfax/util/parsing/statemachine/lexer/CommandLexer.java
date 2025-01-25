@@ -1,6 +1,9 @@
-package xyz.rtsvk.alfax.util.statemachine.lexer;
+package xyz.rtsvk.alfax.util.parsing.statemachine.lexer;
 
-import xyz.rtsvk.alfax.util.statemachine.*;
+import xyz.rtsvk.alfax.util.parsing.statemachine.GenericLexicalAnalyzer;
+import xyz.rtsvk.alfax.util.parsing.statemachine.LexerException;
+import xyz.rtsvk.alfax.util.parsing.statemachine.Predicates;
+import xyz.rtsvk.alfax.util.parsing.statemachine.State;
 
 import java.util.List;
 import java.util.function.Predicate;

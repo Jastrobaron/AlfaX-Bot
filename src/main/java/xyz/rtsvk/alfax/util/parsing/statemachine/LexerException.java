@@ -1,4 +1,4 @@
-package xyz.rtsvk.alfax.util.statemachine;
+package xyz.rtsvk.alfax.util.parsing.statemachine;
 
 /**
  * Exception to be thrown when a lexical error occurs

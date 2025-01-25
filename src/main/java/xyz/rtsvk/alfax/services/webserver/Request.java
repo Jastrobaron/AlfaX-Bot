@@ -1,6 +1,6 @@
 package xyz.rtsvk.alfax.services.webserver;
 
-import xyz.rtsvk.alfax.util.parsing.IParser;
+import xyz.rtsvk.alfax.util.parsing.topdown.IParser;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
