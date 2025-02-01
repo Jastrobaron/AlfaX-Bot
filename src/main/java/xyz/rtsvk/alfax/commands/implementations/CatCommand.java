@@ -43,14 +43,14 @@ public class CatCommand implements ICommand {
 
 			EmbedCreateSpec table = EmbedCreateSpec.builder()
 				.author("thecatapi.com", "https://thecatapi.com/", "")
-				.title("Kočička (mačička)")
+				.title(language.getMessage("command.cat.embed-title"))
 	    		.image(image.get("url").toString())
 				.timestamp(Instant.now())
 				.build();
 
 			chat.sendMessage(table);
 		} catch (Exception e) {
-			chat.sendMessage("Kočky došly :(");
+			chat.sendMessage(language.getMessage("command.cat.out-of-cats"));
 			e.printStackTrace();
 		}
 	}
