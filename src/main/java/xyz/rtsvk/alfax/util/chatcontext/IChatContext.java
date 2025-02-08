@@ -9,6 +9,7 @@ public interface IChatContext {
 	Message sendMessage(String message);
 	Message sendMessage(String message, Snowflake reference);
 	Message sendMessage(EmbedCreateSpec spec);
+	Message sendMessage(EmbedCreateSpec spec, Snowflake reference);
 	void startTyping();
 	Snowflake getLastMessageId();
 	Message getInvokerMessage();

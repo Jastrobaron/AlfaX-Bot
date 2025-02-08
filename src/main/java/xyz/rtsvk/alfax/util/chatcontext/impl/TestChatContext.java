@@ -37,6 +37,12 @@ public class TestChatContext implements IChatContext {
 	}
 
 	@Override
+	public Message sendMessage(EmbedCreateSpec spec, Snowflake reference) {
+		this.messages.add(spec.toString());
+		return null;
+	}
+
+	@Override
 	public void startTyping() {
 
 	}
