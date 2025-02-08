@@ -8,20 +8,25 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateMono;
 import xyz.rtsvk.alfax.util.chatcontext.IChatContext;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 public class DiscordChatContext implements IChatContext {
 
+	private final ScheduledExecutorService scheduler;
 	private final MessageChannel discordChannel;
 	private final Message invokerMessage;
 	private final String commandPrefix;
-	private MessageCreateMono msgCreator;
-	private boolean creatorActive;
+	private ScheduledFuture<?> task;
 
 	public DiscordChatContext(MessageChannel discordChannel, Message invokerMessage, String commandPrefix) {
 		this.discordChannel = discordChannel;
 		this.invokerMessage = invokerMessage;
 		this.commandPrefix = commandPrefix;
-		this.msgCreator = null;
-		this.creatorActive = false;
+		this.scheduler = Executors.newScheduledThreadPool(1);
+		this.task = null;
 	}
 
 	@Override
@@ -31,9 +36,11 @@ public class DiscordChatContext implements IChatContext {
 
 	@Override
 	public Message sendMessage(String message, Snowflake reference) {
-		MessageCreateMono creator = this.creatorActive ? this.msgCreator : this.discordChannel.createMessage();
-		this.creatorActive = false;
-		return creator.withContent(message).withMessageReference(reference).block();
+		if (this.task != null) {
+			this.task.cancel(true);
+			this.task = null;
+		}
+		return this.message(reference).withContent(message).block();
 	}
 
 	@Override
@@ -43,17 +50,19 @@ public class DiscordChatContext implements IChatContext {
 
 	@Override
 	public Message sendMessage(EmbedCreateSpec spec, Snowflake reference) {
-		MessageCreateMono creator = this.creatorActive ? this.msgCreator : this.discordChannel.createMessage();
-		this.creatorActive = false;
-		return creator.withEmbeds(spec).withMessageReference(reference).block();
+		if (this.task != null) {
+			this.task.cancel(true);
+			this.task = null;
+		}
+		return this.message(reference).withEmbeds(spec).block();
 	}
 
 	@Override
 	public void startTyping() {
-		// NOTE: Creates a message with embeds, but none are supplied, might cause issues in the future
-		this.msgCreator = this.discordChannel.createMessage();
-		this.discordChannel.typeUntil(this.msgCreator).subscribe();
-		this.creatorActive = true;
+		if (this.task != null) {
+			return;
+		}
+		this.task = this.scheduler.scheduleAtFixedRate(this.discordChannel.type()::subscribe, 0, 5, TimeUnit.SECONDS);
 	}
 
 	@Override
@@ -79,5 +88,9 @@ public class DiscordChatContext implements IChatContext {
 	@Override
 	public boolean isPrivate() {
 		return this.discordChannel instanceof PrivateChannel;
+	}
+
+	private MessageCreateMono message(Snowflake reference) {
+		return this.discordChannel.createMessage().withMessageReference(reference);
 	}
 }
