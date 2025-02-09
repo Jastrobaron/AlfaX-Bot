@@ -63,6 +63,7 @@ public class DiscordChatContext implements IChatContext {
 			return;
 		}
 		this.task = this.scheduler.scheduleAtFixedRate(this.discordChannel.type()::subscribe, 0, 5, TimeUnit.SECONDS);
+
 	}
 
 	@Override
