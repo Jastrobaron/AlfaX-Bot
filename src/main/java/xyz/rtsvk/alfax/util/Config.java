@@ -44,8 +44,7 @@ public class Config extends LinkedHashMap<String, Object> {
 				return cfg;
 			}
 
-			try {
-				Scanner reader = new Scanner(new FileInputStream(file));
+			try (Scanner reader = new Scanner(new FileInputStream(file))) {
 				StringBuilder content = new StringBuilder();
 				while (reader.hasNextLine())
 					content.append(reader.nextLine()).append("\n");
