@@ -24,7 +24,7 @@ public class AudioPlayerManagerSingleton {
             instance = new DefaultAudioPlayerManager();
             instance.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
             instance.registerSourceManager(new YoutubeAudioSourceManager(true,
-                    new Music(), new Web(), new AndroidTestsuite(), new TvHtml5Embedded()));
+                    new Music(), new Web(), new TvHtml5Embedded()));
             AudioSourceManagers.registerRemoteSources(instance, com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class);
             AudioSourceManagers.registerLocalSource(instance);
         }
