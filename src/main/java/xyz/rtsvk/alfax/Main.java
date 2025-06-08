@@ -66,7 +66,22 @@ public class Main {
 		}
 
 		// initialize database wrapper
-		Database.init(config);
+		int attempts = config.getInt("db-max-connection-retries");
+		while (attempts > 0) {
+			Database.init(config);
+			if (Database.isInitialized()) {
+				break;
+			} else {
+				attempts--;
+				logger.warn(String.format("Failed to connect to the database server; retrying in 3s, remaining attempts: %d", attempts));
+				Thread.sleep(3000);
+			}
+		}
+
+		if (attempts == 0) {
+			logger.error("Failed to connect to the database server; is it running?");
+			return;
+		}
 
 		int adminCount = Database.getAdminCount();
 		if (adminCount == 0) {
