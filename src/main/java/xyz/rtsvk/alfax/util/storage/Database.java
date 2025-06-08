@@ -767,6 +767,10 @@ public class Database {
 		}
 	}
 
+	public static boolean isInitialized() {
+		return initialized;
+	}
+
 	public record UserInfo(String id, String authKey, int permissions, long credits, String language) {}
 
 	public static class SensorData {
