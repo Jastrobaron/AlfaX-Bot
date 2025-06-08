@@ -69,7 +69,7 @@ public class Config extends LinkedHashMap<String, Object> {
 		Config cfg = new Config();
 
 		for (String arg : args) {
-			if (arg.isEmpty()) continue;
+			if (arg.isBlank()) continue;
 
 			if (checkPrefix) {
 				if (!arg.startsWith(ARG_PREFIX)) continue;
@@ -103,7 +103,7 @@ public class Config extends LinkedHashMap<String, Object> {
 	public static Config defaultConfig() throws IOException {
 		StringBuilder raw = new StringBuilder();
 		try (InputStream stream = Config.class.getResourceAsStream("/default-config.properties")) {
-			if (stream == null) throw new FileNotFoundException("Default config file not found!");
+			if (stream == null) throw new FileNotFoundException("Default config resource file not found!");
 
 			byte[] buffer = new byte[64];
 			int read;
@@ -111,8 +111,8 @@ public class Config extends LinkedHashMap<String, Object> {
 				raw.append(new String(buffer, 0, read).trim());
 			}
 		}
-
-		return parse(raw.toString().split("\n"), false);
+		String rawConfig = raw.toString().replace("\r\n", "\n");
+		return parse(rawConfig.split("\n"), false);
 	}
 
 	/**
