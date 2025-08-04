@@ -1,5 +1,6 @@
 package xyz.rtsvk.alfax.commands.implementations;
 
+import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.*;
 import com.theokanning.openai.service.OpenAiService;
 import discord4j.common.util.Snowflake;
@@ -77,34 +78,39 @@ public class ChatGPTCommand implements ICommand {
 		}
 		history.sort((a,b) -> -1);  // reverse the list
 
-		chat.startTyping();
-		StringBuilder output = new StringBuilder();
-		OpenAiService service = new OpenAiService(
-				this.config.getString("openai-api-key"),
-				Duration.ofSeconds(this.config.getInt("openai-timeout")));
-		ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
-				.messages(history)
-				.model(this.config.getString("openai-chat-model"))
-				.build();
-		ChatCompletionResult result = service.createChatCompletion(completionRequest);
-		long tokenAmt = result.getUsage().getTotalTokens();
-		Database.subtractUserCredits(user.getId(), tokenAmt);
-		if (guildState != null) {
-			Database.addTokenUsage(guildState.getGuildId(), tokenAmt);
-		}
-		List<ChatCompletionChoice> choices = result.getChoices();
-		choices.forEach(e -> {
-			String text = e.getMessage().getContent();
-			output.append(text);
-		});
+		try {
+			chat.startTyping();
+			StringBuilder output = new StringBuilder();
+			OpenAiService service = new OpenAiService(
+					this.config.getString("openai-api-key"),
+					Duration.ofSeconds(this.config.getInt("openai-timeout")));
+			ChatCompletionRequest completionRequest = ChatCompletionRequest.builder()
+					.messages(history)
+					.model(this.config.getString("openai-chat-model"))
+					.build();
+			ChatCompletionResult result = service.createChatCompletion(completionRequest);
+			long tokenAmt = result.getUsage().getTotalTokens();
+			Database.subtractUserCredits(user.getId(), tokenAmt);
+			if (guildState != null) {
+				Database.addTokenUsage(guildState.getGuildId(), tokenAmt);
+			}
+			List<ChatCompletionChoice> choices = result.getChoices();
+			choices.forEach(e -> {
+				String text = e.getMessage().getContent();
+				output.append(text);
+			});
 
-		String response = output.toString()
-				.replace("@", "@\u200D");   // Prevent mentions
-		String[] chunks = splitToChunks(response, 2000);
-		Snowflake refMessageId = chat.getInvokerMessage().getId();
-		for (String chunk : chunks) {
-			Message msg = chat.sendMessage(chunk, refMessageId);
-			if (msg != null) refMessageId = msg.getId();
+			String response = output.toString()
+					.replace("@", "@\u200D");   // Prevent mentions
+			String[] chunks = splitToChunks(response, 2000);
+			Snowflake refMessageId = chat.getInvokerMessage().getId();
+			for (String chunk : chunks) {
+				Message msg = chat.sendMessage(chunk, refMessageId);
+				if (msg != null) refMessageId = msg.getId();
+			}
+		} catch (OpenAiHttpException exception) {
+			chat.sendMessage(language.getFormattedString("command.chatgpt.error")
+					.addParam("error", exception.getMessage()).build());
 		}
 	}
 
