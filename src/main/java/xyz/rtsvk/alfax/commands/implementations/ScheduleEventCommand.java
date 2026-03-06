@@ -11,11 +11,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Properties;
 
 public class ScheduleEventCommand implements Command {
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
 		// syntax: schedule <event name> <event time> <event description>
 		if (args.size() < 3) {
 			channel.createMessage("Syntax: schedule <event name> <event time> <event description>").block();

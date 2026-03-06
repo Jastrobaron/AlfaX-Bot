@@ -7,11 +7,12 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import xyz.rtsvk.alfax.commands.Command;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 
 public class PickCommand implements Command {
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
 		if (!args.isEmpty()) {
 			Random random = new Random();
 			int index = random.nextInt(args.size()-1);

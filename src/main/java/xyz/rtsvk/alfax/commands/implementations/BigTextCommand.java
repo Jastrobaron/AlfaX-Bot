@@ -8,6 +8,7 @@ import xyz.rtsvk.alfax.commands.Command;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 public class BigTextCommand implements Command {
 
@@ -61,7 +62,7 @@ public class BigTextCommand implements Command {
 	}
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
 		String message = String.join(" ", args);
 
 		// normalize characters

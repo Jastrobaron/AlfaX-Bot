@@ -57,9 +57,9 @@ public class RequestHandler implements Runnable {
 		if (cfg.getBooleanOrDefault("mqtt-enabled", false))
 			this.actions.add(new ActionData(
 					"mqtt_publish",
-					new MqttPublishAction(mqtt),
-					Database.PERMISSION_MQTT,
-					List.of("topic", "message")));
+								new MqttPublishAction(mqtt),
+								Database.PERMISSION_MQTT,
+								List.of("topic", "message")));
 	}
 
 	@Override
@@ -67,47 +67,46 @@ public class RequestHandler implements Runnable {
 		try {
 			this.logger.info("Incoming request from " + this.skt.getRemoteSocketAddress());
 			this.skt.setSoTimeout(10000);
-
 			Request request = Request.parseRequest(this.in, this.supportedContentTypes);
+
+			if (request == null) {
+				this.out.println("HTTP/1.1 " + Response.RESP_400_BAD_REQUEST);
+				this.out.close();
+				this.in.close();
+				this.skt.close();
+				return;
+			}
+
 			String message = "Server responeded with an error";
+			String key = request.getProperty("auth_key", "").toString();
+			this.out.print(request.getProtocolVersion() + " ");
+			ActionData actionData = this.actions.stream()
+					.filter(a -> a.getEndpointName().equals(request.getPath().substring(1)))
+					.findFirst().orElse(null);
 
-			if (request == null)
-				this.out.println(Response.RESP_500_ERROR);
-
-			else if (!request.getRequestMethod().equals("POST"))
+			if (!request.getRequestMethod().equals("POST"))
 				this.out.println(request.getProtocolVersion() + " " + Response.RESP_501_NOT_IMPLEMENTED);
 
+			else if (actionData == null) {
+				this.out.println(Response.RESP_404_NOT_FOUND);
+			}
+			else if (!request.hasProperty("auth_key")) {
+				this.out.println(Response.RESP_401_UNAUTHORIZED);
+				message = "Missing auth_key parameter";
+			}
+			else if (!Database.checkPermissionsByKey(key, actionData.getRequiredPermissions())) {
+				this.out.println(Response.RESP_403_FORBIDDEN);
+				message = "You don't have permissions to do that";
+			}
+			else if (actionData.getRequiredArgs().stream().anyMatch(a -> !request.hasProperty(a))) {
+				this.out.println(Response.RESP_400_BAD_REQUEST);
+				message = "Missing parameters";
+			}
 			else {
-
-
-				String key = request.getProperty("auth_key").toString();
-				this.out.print(request.getProtocolVersion() + " ");
-				ActionData actionData = this.actions.stream()
-						.filter(a -> a.getEndpointName().equals(request.getPath().substring(1)))
-						.findFirst().orElse(null);
-
-				if (actionData == null)
-					this.out.println(Response.RESP_404_NOT_FOUND);
-				else {
-					if (!request.hasProperty("auth_key")) {
-						this.out.println(Response.RESP_401_UNAUTHORIZED);
-						message = "Missing auth_key parameter";
-					}
-					else if (!Database.checkPermissionsByKey(key, actionData.getRequiredPermissions())) {
-						this.out.println(Response.RESP_403_FORBIDDEN);
-						message = "You don't have permissions to do that";
-					}
-					else if (actionData.getRequiredArgs().stream().anyMatch(a -> !request.hasProperty(a))) {
-						this.out.println(Response.RESP_400_BAD_REQUEST);
-						message = "Missing parameters";
-					}
-					else {
-						Action action = actionData.getAction();
-						ActionResult result = action.handle(this.client, request);
-						this.out.println(result.getStatus());
-						message = result.getMessage();
-					}
-				}
+				Action action = actionData.getAction();
+				ActionResult result = action.handle(this.client, request);
+				this.out.println(result.getStatus());
+				message = result.getMessage();
 			}
 
 			/*StringBuilder message = new StringBuilder("Lorem ipsum dolor sit amet.\n");

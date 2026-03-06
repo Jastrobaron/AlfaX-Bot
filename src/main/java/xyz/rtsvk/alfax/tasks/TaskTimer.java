@@ -12,9 +12,10 @@ import java.util.List;
 
 public class TaskTimer extends Thread {
 
-	private GatewayDiscordClient client;
-	private Logger logger;
-	private long last, interval;
+	private final GatewayDiscordClient client;
+	private final Logger logger;
+	private long last;
+	private final long interval;
 	private boolean running;
 
 	private static final long REMIND_5MIN = 5 * 60 * 1000;
@@ -80,7 +81,7 @@ public class TaskTimer extends Thread {
 	public void setEnabled(boolean enabled) {
 		this.running = enabled;
 		if (this.running) {
-			this.last = LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+			this.last = System.currentTimeMillis();
 			this.start();
 		}
 	}

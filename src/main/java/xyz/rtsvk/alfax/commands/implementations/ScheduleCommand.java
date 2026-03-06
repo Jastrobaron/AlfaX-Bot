@@ -7,11 +7,12 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import xyz.rtsvk.alfax.commands.Command;
 
 import java.util.List;
+import java.util.Properties;
 
 public class ScheduleCommand implements Command {
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
 		if (!user.getTag().equals("Jastrobaron#0262")) {
 			channel.createMessage("**Dobry pokus zmrde. Toto ty nemozes :)**").block();
 		}

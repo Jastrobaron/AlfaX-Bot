@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.List;
+import java.util.Properties;
 
 public class WeatherCommand implements Command {
 
@@ -30,14 +31,14 @@ public class WeatherCommand implements Command {
 	}
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
 		DecimalFormat f = new DecimalFormat("##.00");
 
 		try {
 			String cityName = String.join(" ", args);
 
 			// fetch the weather data
-			URL url = new URL("http://api.openweathermap.org/data/2.5/weather?appid=" + this.apiKey + "&q=" + cityName + "&units=metric&lang=" + this.lang);
+			URL url = new URL("https://api.openweathermap.org/data/2.5/weather?appid=" + this.apiKey + "&q=" + cityName + "&units=metric&lang=" + this.lang);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setDoInput(true);
 			BufferedInputStream input = new BufferedInputStream(conn.getInputStream());
@@ -79,7 +80,8 @@ public class WeatherCommand implements Command {
 			channel.createMessage(table).block();
 
 		} catch (Exception e) {
-			channel.createMessage("**Chyba pri ziskavani udajov o pocasi: " + e.getMessage() + "**").block();
+			channel.createMessage("**Chyba pri ziskavani udajov o pocasi.**").block();
+			e.printStackTrace(System.out);
 		}
 	}
 

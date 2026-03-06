@@ -42,7 +42,7 @@ public class Request {
 		}
 
 		Content c = supportedContentTypes.get(contentType);
-		if (c != null && length > 0 && sb.length() > 0)
+		if (c != null && length > 0 && !sb.isEmpty())
 			return new Request(header, c.parse(sb.toString()));
 
 		return new Request(header, null);
@@ -128,6 +128,10 @@ public class Request {
 	}
 	public Object getProperty(String key) {
 		return this.requestBody.get(key);
+	}
+
+	public Object getProperty(String key, Object def) {
+		return this.requestBody.getOrDefault(key, def);
 	}
 
 	public Map<String, Object> getProperties() {

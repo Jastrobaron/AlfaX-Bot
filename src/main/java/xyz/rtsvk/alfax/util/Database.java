@@ -20,6 +20,7 @@ public class Database {
 	private static Logger logger;
 	private static Connection conn;
 
+	public static final byte PERMISSION_NONE = 0x00;
 	public static final byte PERMISSION_ADMIN = 0x01;
 	public static final byte PERMISSION_API_CHANNEL = 0x02;
 	public static final byte PERMISSION_API_DM = 0x04;
@@ -329,20 +330,6 @@ public class Database {
 		}
 	}
 
-	public static String hash(String input) throws NoSuchAlgorithmException {
-		String result = input;
-		if(input != null) {
-			MessageDigest md = MessageDigest.getInstance("SHA-512");
-			md.update(input.getBytes());
-			BigInteger hash = new BigInteger(1, md.digest());
-			result = hash.toString(16);
-			while(result.length() < 128) {
-				result = "0" + result;
-			}
-		}
-		return result;
-	}
-
 	public static boolean updateSensorData(SensorData data) {
 		return false;
 	}
@@ -418,6 +405,7 @@ public class Database {
 			return false;
 		}
 	}
+
 
 	public static class SensorData {
 

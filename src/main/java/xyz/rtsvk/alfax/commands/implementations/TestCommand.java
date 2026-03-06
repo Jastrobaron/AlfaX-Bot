@@ -7,7 +7,6 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import xyz.rtsvk.alfax.commands.Command;
 
 import java.util.List;
-import java.util.Properties;
 
 public class TestCommand implements Command {
 	@Override

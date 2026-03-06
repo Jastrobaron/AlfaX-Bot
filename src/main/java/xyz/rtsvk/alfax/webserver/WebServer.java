@@ -8,10 +8,11 @@ import java.net.ServerSocket;
 
 public class WebServer extends Thread {
 
-	private GatewayDiscordClient client;
-	private Config cfg;
+	private final GatewayDiscordClient client;
+	private final Config cfg;
 
 	public WebServer(Config cfg, GatewayDiscordClient client) {
+		this.setName("WebServer");
 		this.cfg = cfg;
 		this.client = client;
 	}
@@ -19,7 +20,8 @@ public class WebServer extends Thread {
 	@Override
 	public void run() {
 		try {
-			Mqtt mqtt = new Mqtt(cfg, "Alfa-X Bot WebServer", client);
+			Mqtt mqtt = new Mqtt(cfg, client);
+			mqtt.setClientId("Alfa-X Bot WebServer");
 			ServerSocket srv = new ServerSocket(this.cfg.getInt("webserver-port"));
 			while (true) {
 				Thread handler = new Thread(new RequestHandler(this.cfg, mqtt, srv.accept(), this.client));

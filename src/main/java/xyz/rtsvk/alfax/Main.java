@@ -18,32 +18,38 @@ import xyz.rtsvk.alfax.mqtt.Mqtt;
 import xyz.rtsvk.alfax.scheduler.CommandExecutionScheduler;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 import xyz.rtsvk.alfax.tasks.TaskTimer;
-import xyz.rtsvk.alfax.util.Config;
-import xyz.rtsvk.alfax.util.Database;
-import xyz.rtsvk.alfax.util.Logger;
-import xyz.rtsvk.alfax.util.TextUtils;
+import xyz.rtsvk.alfax.util.*;
 import xyz.rtsvk.alfax.util.lavaplayer.LavaPlayerAudioProvider;
 import xyz.rtsvk.alfax.util.lavaplayer.TrackScheduler;
 import xyz.rtsvk.alfax.webserver.WebServer;
 
 import javax.sound.midi.Track;
+import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
 	public static void main(String[] args) throws Exception {
 
 		final Config config = Config.from(args);
 		final Logger logger = new Logger(Main.class);
+		FileManager.createDirectories();
 		Logger.setLogFile(config.getStringOrDefault("log-file", "latest.log"));
-		Config.defaultConfig().forEach(config::putIfAbsent);
 
-		// to generate the default config, run the bot as `java -jar jarfile.jar --default-config`
-		if (config.containsKey("default-config")) {
-			String filename = config.getStringOrDefault("default-config", "config.properties.def");
-			config.remove("default-config");
-			config.write(filename);
-			logger.info("Created default configuration file '" + filename + "'!");
+		// if the bot is run with --copy-default-config, it will generate a default config file and exit
+		if (config.containsKey("copy-default-config")) {
+			String filename = config.getStringOrDefault("copy-default-config", "default-config.properties");
+			Config.copyDefaultConfig(filename);
+			logger.info("Default configuration saved to file '" + filename + "'!");
 			return;
+		}
+
+		Config.defaultConfig().forEach(config::putIfAbsent);    // fill in missing values with defaults
+		if (config.containsKey("save-config")) {
+			String filename = config.getStringOrDefault("save-config", "saved-config_" + System.currentTimeMillis() + ".properties");
+			config.remove("save-config");
+			config.write(filename);
+			logger.info("Current configuration saved to file '" + filename + "'!");
 		}
 
 		// initialize database wrapper
@@ -104,24 +110,29 @@ public class Main {
 		proc.registerCommand(new ScheduleEventCommand());
 		proc.registerCommand(new MathExpressionCommand());
 		proc.registerCommand(new CatCommand());
+		proc.registerCommand(new TextToSpeechCommand(config));
 		//proc.registerCommand(new PlayCommand(playerManager, player, provider, trackScheduler));
 
-		Thread scheduler = new Thread(new CommandExecutionScheduler(gateway, proc));
+		ServiceWatcher watcher = new ServiceWatcher();
+		Thread scheduler = new CommandExecutionScheduler(gateway, proc);
 		Thread webserver = new WebServer(config, gateway);
-		Mqtt mqtt = new Mqtt(config, config.getString("mqtt-client-id"), gateway);
+		Mqtt mqtt = new Mqtt(config, gateway);
 
 		// scheduler
 		if (config.getBooleanOrDefault("scheduler-enabled", false)) {
+			scheduler.setUncaughtExceptionHandler(watcher);
 			scheduler.start();
 		}
 
 		// webhook server
 		if (config.getBoolean("webserver-enabled")) {
+			webserver.setUncaughtExceptionHandler(watcher);
 			webserver.start();
 		}
 
 		// MQTT Subscribe Client
 		if (config.getBoolean("mqtt-enabled")) {
+			mqtt.setUncaughtExceptionHandler(watcher);
 			mqtt.start();
 		}
 
@@ -167,21 +178,28 @@ public class Main {
 			}
 		});
 
+		AtomicBoolean shutdownRequested = new AtomicBoolean(false);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			if (scheduler.isAlive())
+			shutdownRequested.set(true);
+			if (scheduler.isAlive()) {
 				scheduler.interrupt();
-			if (webserver.isAlive())
+			}
+			if (webserver.isAlive()) {
 				webserver.interrupt();
-			if (mqtt.isAlive())
+			}
+			if (mqtt.isAlive()) {
 				mqtt.interrupt();
+			}
 			timer.setEnabled(false);
 			runningCommandExecutors.forEach(Thread::interrupt);
 			Database.close();
+			FileManager.deleteTmpFiles();
 			gateway.logout().block();
 			logger.info("Goodbye!");
 		}));
 
 		gateway.onDisconnect().subscribe(event -> {
+			if (shutdownRequested.get()) return;
 			logger.error("Disconnected from Discord! Shutting down...");
 			Runtime.getRuntime().exit(1);
 		});

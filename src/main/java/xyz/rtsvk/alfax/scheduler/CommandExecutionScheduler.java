@@ -14,14 +14,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CommandExecutionScheduler implements Runnable {
+public class CommandExecutionScheduler extends Thread {
 
-	private GatewayDiscordClient gateway;
-	private CommandProcessor proc;
-	private Logger logger;
+	private final GatewayDiscordClient gateway;
+	private final CommandProcessor proc;
+	private final Logger logger;
 	private boolean executed;
 
 	public CommandExecutionScheduler(GatewayDiscordClient gateway, CommandProcessor proc) {
+		super("CommandExecutionScheduler");
 		this.gateway = gateway;
 		this.proc = proc;
 		this.logger = new Logger(this.getClass());
@@ -38,7 +39,7 @@ public class CommandExecutionScheduler implements Runnable {
 			List<Task> tasks = Database.getScheduleFor(now.toLocalDate());
 			this.logger.info("Got " + tasks.size() +  " tasks.");
 
-			if (tasks.size() > 0) tasks.forEach(e -> {
+			if (!tasks.isEmpty()) tasks.forEach(e -> {
 				final List<String> commandArgs = new ArrayList<>(Arrays.asList(e.getCommand().split(" ")));
 				String cmdName = commandArgs.remove(0);
 				Command cmd = proc.getCommandExecutor(cmdName);
@@ -54,10 +55,10 @@ public class CommandExecutionScheduler implements Runnable {
 				if (now.toLocalTime() != execTime) return;
 				if (now.toLocalDate() != execDate) return;
 
-				if (implicate(e.getDays().length() > 0, e.getDays().contains(String.valueOf(day)))) {
+				if (implicate(!e.getDays().isEmpty(), e.getDays().contains(String.valueOf(day)))) {
 					try {
 						this.logger.info("Running command " +  cmdName);
-						cmd.handle(this.gateway.getSelf().block(), channel, commandArgs, e.getGuild(), this.gateway);
+						cmd.handle(this.gateway.getSelf().block(), null, channel, commandArgs, e.getGuild(), this.gateway);
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}

@@ -13,6 +13,7 @@ import xyz.rtsvk.alfax.util.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Properties;
 
 public class MqttPublishCommand implements Command {
 
@@ -29,16 +30,14 @@ public class MqttPublishCommand implements Command {
 			return;
 		}
 
-		this.client = new Mqtt(cfg, "MQTT-Publish-Command", null);
+		this.client = new Mqtt(cfg, null);
+		this.client.setClientId("MQTT-Publish-Command");
 		this.client.setDoSubscribe(false);
 		this.client.start();
 	}
 
-	public Mqtt getClient() {
-		return client;
-	}
-
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
+	@Override
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
 		if (!Database.checkPermissions(user.getId().asString(), Database.PERMISSION_MQTT)) {
 			channel.createMessage("Nemas opravnenie na pouzitie tohto prikazu.").block();
 			return;
@@ -54,6 +53,10 @@ public class MqttPublishCommand implements Command {
 		MqttMessage msg = new MqttMessage(message.getBytes(StandardCharsets.UTF_8));
 		this.client.publish(topic, msg);
 		this.logger.info("Published message to topic '" + topic + "': " + message);
+	}
+
+	public Mqtt getClient() {
+		return client;
 	}
 
 	@Override

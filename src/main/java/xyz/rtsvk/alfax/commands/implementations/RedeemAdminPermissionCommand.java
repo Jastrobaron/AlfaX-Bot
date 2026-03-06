@@ -9,6 +9,7 @@ import xyz.rtsvk.alfax.util.Config;
 import xyz.rtsvk.alfax.util.Database;
 
 import java.util.List;
+import java.util.Properties;
 
 public class RedeemAdminPermissionCommand implements Command {
 
@@ -19,7 +20,7 @@ public class RedeemAdminPermissionCommand implements Command {
 	}
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
 
 		int adminCount = Database.getAdminCount();
 		if (adminCount == -1) {

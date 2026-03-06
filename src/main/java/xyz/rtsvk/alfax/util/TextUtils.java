@@ -1,27 +1,36 @@
 package xyz.rtsvk.alfax.util;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class TextUtils {
 
-	// create a function to generate a random string of length n
 	public static String getRandomString(int n) {
-		// chose a Character random from this String
 		String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 				+ "0123456789"
 				+ "abcdefghijklmnopqrstuvxyz";
-
-		// create StringBuffer size of AlphaNumericString
 		StringBuilder sb = new StringBuilder(n);
 
 		for (int i = 0; i < n; i++) {
-			// generate a random number between
-			// 0 to alphabet  variable length
 			int index = (int)(alphabet.length() * Math.random());
-
-			// add Character one by one in end of sb
 			sb.append(alphabet.charAt(index));
 		}
 
 		return sb.toString();
 	}
 
+	public static String hash(String input) throws NoSuchAlgorithmException {
+		String result = input;
+		if(input != null) {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			md.update(input.getBytes());
+			BigInteger hash = new BigInteger(1, md.digest());
+			result = hash.toString(16);
+			while(result.length() < 128) {
+				result = "0" + result;
+			}
+		}
+		return result;
+	}
 }

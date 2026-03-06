@@ -8,29 +8,56 @@ import xyz.rtsvk.alfax.commands.Command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class MathExpressionCommand implements Command {
 
-	private final List<Symbol> symbols = new ArrayList<>();
+	private final List<Symbol> symtable = new ArrayList<>();
 
 	public MathExpressionCommand() {
-		this.symbols.add(new Symbol("pi", Math.PI));
-		this.symbols.add(new Symbol("e", Math.E));
-		this.symbols.add(new Symbol("phi", 1.61803398874989484820458683436563811772030917980576286213544862270526046281890));
-		this.symbols.add(new Symbol("ln2", Math.log(2)));
-		// TODO: add sqrt, sin, cos, tan, etc.
+		// basic math operators
+		this.symtable.add(new Symbol("+", 2, e -> e[0] + e[1]));
+		this.symtable.add(new Symbol("-", 2, e -> e[0] - e[1]));
+		this.symtable.add(new Symbol("×", 2, e -> e[0] * e[1]));
+		this.symtable.add(new Symbol("*", 2, e -> e[0] * e[1]));
+		this.symtable.add(new Symbol("÷", 2, e -> e[0] / e[1]));
+		this.symtable.add(new Symbol("/", 2, e -> e[0] / e[1]));
+		this.symtable.add(new Symbol("%", 2, e -> e[0] % e[1]));
+		this.symtable.add(new Symbol("^", 2, e -> Math.pow(e[0], e[1])));
+		this.symtable.add(new Symbol("root", 2, e -> Math.pow(e[0], 1 / e[1])));
+
+		// constants
+		this.symtable.add(new Symbol("pi", 0, e -> Math.PI));
+		this.symtable.add(new Symbol("e",0, e -> Math.E));
+		this.symtable.add(new Symbol("phi", 0, e -> 1.61803398874989484820458683436563811772030917980576286213544862270526046281890));
+		this.symtable.add(new Symbol("inf", 0, e -> Double.POSITIVE_INFINITY));
+
+		// functions
+		this.symtable.add(new Symbol("ln", 1, e -> Math.log(e[0])));
+		this.symtable.add(new Symbol("log", 1, e -> Math.log10(e[0])));
+		this.symtable.add(new Symbol("sqrt", 1, e -> Math.sqrt(e[0])));
+		this.symtable.add(new Symbol("cbrt", 1, e -> Math.cbrt(e[0])));
+
+		// trigonometry
+		this.symtable.add(new Symbol("sin", 1, e -> Math.sin(e[0])));
+		this.symtable.add(new Symbol("cos", 1, e -> Math.cos(e[0])));
+		this.symtable.add(new Symbol("tan", 1, e -> Math.tan(e[0])));
+		this.symtable.add(new Symbol("asin", 1, e -> Math.asin(e[0])));
+		this.symtable.add(new Symbol("acos", 1, e -> Math.acos(e[0])));
+		this.symtable.add(new Symbol("atan", 1, e -> Math.atan(e[0])));
+		this.symtable.add(new Symbol("atan2", 1, e -> Math.atan2(e[0], e[1])));
 	}
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) throws Exception {
 		String rawExpression = args.stream().filter(s -> !s.contains("=")).collect(Collectors.joining(""));
 		Stack<Token> stack = new Stack<>();
 		Stack<Double> evalStack = new Stack<>();
 		List<Token> tokens = tokenize(rawExpression);
 		List<Token> postfix = new ArrayList<>();
-		List<Symbol> symtable = new ArrayList<>(this.symbols);
+		List<Symbol> symtable = new ArrayList<>(this.symtable);
 
 		args = args.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
 		args.stream().filter(s -> s.contains("=")).forEach(s -> {
@@ -38,37 +65,57 @@ public class MathExpressionCommand implements Command {
 
 			String name = parts[0];
 			String value = parts[1];
-			if (this.symbols.stream().anyMatch(symbol -> symbol.getName().equals(name))) {
+			if (this.symtable.stream().anyMatch(symbol -> symbol.getName().equals(name))) {
 				channel.createMessage("Symbol '" + name + "' already exists").block();
 				return;
 			}
 			try {
 				double val = Double.parseDouble(value);
-				symtable.add(new Symbol(name, val));
+				symtable.add(new Symbol(name, 0, e -> val));
 			} catch (NumberFormatException e) {
 				channel.createMessage("Invalid symbol value `" + value + "`").block();
 			}
 		});
 
 		// convert the expression to postfix notation
-		for (Token token : tokens) {
-			if (token.type == TokenType.INTEGER_LITERAL || token.type == TokenType.DOUBLE_LITERAL || token.type == TokenType.SYMBOL) {
-				postfix.add(token);
-			}
-			else if (token.type == TokenType.OPERATOR) {
-				while (!stack.empty() && stack.peek().type == TokenType.OPERATOR && getPriority(stack.peek().value.charAt(0)) >= getPriority(token.value.charAt(0))) {
-					postfix.add(stack.pop());
-				}
-				stack.push(token);
-			}
-			else if (token.type == TokenType.OPEN_BRACKET) {
-				stack.push(token);
-			}
-			else if (token.type == TokenType.CLOSE_BRACKET) {
-				while (!stack.empty() && stack.peek().type != TokenType.OPEN_BRACKET) {
-					postfix.add(stack.pop());
-				}
-				stack.pop();
+		for (int i = 0; i < tokens.size(); i++) {
+			Token token = tokens.get(i);
+			Token nextToken = i + 1 < tokens.size() ? tokens.get(i + 1) : null;
+			switch (token.type) {
+				case INTEGER_LITERAL:
+				case DOUBLE_LITERAL:
+					postfix.add(token);
+					break;
+
+				case SYMBOL:
+					if (nextToken != null && nextToken.type == TokenType.OPEN_BRACKET) {
+						stack.push(token);
+					}
+					else {
+						postfix.add(token);
+					}
+					break;
+
+				case OPERATOR:
+					while (!stack.empty() && stack.peek().type == TokenType.OPERATOR && getPriority(stack.peek().value.charAt(0)) >= getPriority(token.value.charAt(0))) {
+						postfix.add(stack.pop());
+					}
+					stack.push(token);
+					break;
+
+				case OPEN_BRACKET:
+					stack.push(token);
+					break;
+
+				case CLOSE_BRACKET:
+					while (!stack.empty() && stack.peek().type != TokenType.OPEN_BRACKET) {
+						postfix.add(stack.pop());
+					}
+					stack.pop();
+					break;
+
+				default:
+					break;
 			}
 		}
 
@@ -84,42 +131,21 @@ public class MathExpressionCommand implements Command {
 			else if (token.getType() == TokenType.SYMBOL) {
 				Symbol symbol = symtable.stream().filter(s -> s.getName().equals(token.getValue())).findFirst().orElse(null);
 				if (symbol == null) {
-					channel.createMessage("Unknown symbol `" + token.getValue() + "`").block();
+					channel.createMessage("```\nUnknown symbol: " + token.getValue() + "\n```").block();
 					return;
 				}
-				evalStack.push((Double) symbol.getValue());
+				evalStack.push(symbol.getValue());
 			}
 			else if (token.getType() == TokenType.OPERATOR) {
-				double b = evalStack.pop();
-				double a = evalStack.pop();
-				switch (token.getValue()) {
-					case "+":
-						evalStack.push(a + b);
-						break;
-					case "-":
-						evalStack.push(a - b);
-						break;
-					case "×":
-					case "*":
-						evalStack.push(a * b);
-						break;
-					case "÷":
-					case "/":
-						if (b == 0.0) {
-							channel.createMessage("Division by zero").block();
-							return;
-						}
-						evalStack.push(a / b);
-						break;
-					case "%":
-						evalStack.push(a % b);
-						break;
-					case "^":
-						evalStack.push(Math.pow(a, b));
-						break;
-					default:
-						channel.createMessage("Unknown operator `" + token.value + "`").block();
-						return;
+				String operator = token.getValue();
+				Symbol symbol = symtable.stream().filter(s -> s.getName().equals(operator)).findFirst().orElse(null);
+				if (symbol == null) {
+					channel.createMessage("```\nUnknown operator: " + operator + "\n```").block();
+					return;
+				}
+				if (!symbol.eval(evalStack)) {
+					channel.createMessage("```\nInvalid number of arguments for operator: " + operator + "\n```").block();
+					return;
 				}
 			}
 		}
@@ -134,7 +160,7 @@ public class MathExpressionCommand implements Command {
 		int index = 0;
 		while (index < expression.length()) {
 			if (isOperator(expression.charAt(index))) {
-				if (token.length() > 0) {
+				if (!token.isEmpty()) {
 					tokens.add(new Token(token.toString(), TokenType.SYMBOL));
 					token = new StringBuilder();
 				}
@@ -142,7 +168,7 @@ public class MathExpressionCommand implements Command {
 				index++;
 			}
 			else if (expression.charAt(index) == '(') {
-				if (token.length() > 0) {
+				if (!token.isEmpty()) {
 					tokens.add(new Token(token.toString(), TokenType.SYMBOL));
 					token = new StringBuilder();
 				}
@@ -150,7 +176,7 @@ public class MathExpressionCommand implements Command {
 				index++;
 			}
 			else if (expression.charAt(index) == ')') {
-				if (token.length() > 0) {
+				if (!token.isEmpty()) {
 					tokens.add(new Token(token.toString(), TokenType.SYMBOL));
 					token = new StringBuilder();
 				}
@@ -171,7 +197,7 @@ public class MathExpressionCommand implements Command {
 			}
 		}
 
-		if (token.length() > 0) {
+		if (!token.isEmpty()) {
 			tokens.add(new Token(token.toString(), TokenType.SYMBOL));
 		}
 
@@ -238,6 +264,49 @@ public class MathExpressionCommand implements Command {
 		}
 	}
 
+	private static class Symbol {
+
+		private final String name;
+		private final int arity;
+		private final Function valueSupplier;
+		public Symbol(String name, int arity, Function valueSupplier) {
+			this.name = name;
+			this.arity = arity;
+			this.valueSupplier = valueSupplier;
+		}
+
+		public boolean eval(Stack<Double> stack) {
+			if (stack.size() < arity) {
+				return false;
+			}
+			double[] args = new double[arity];
+			for (int i = arity - 1; i >= 0; i--) {
+				args[i] = stack.pop();
+			}
+			stack.push(this.getValue(args));
+			return true;
+		}
+
+		public String getName() {
+			return this.name;
+		}
+
+		public Double getValue() {
+			return this.valueSupplier.apply(0.0);
+		}
+
+		public Double getValue(double... args) {
+			return this.valueSupplier.apply(args);
+		}
+
+		public int getArity() {
+			return arity;
+		}
+	}
+	private interface Function {
+		double apply(double... args);
+	}
+
 	private enum TokenType {
 		DOUBLE_LITERAL,
 		INTEGER_LITERAL,
@@ -247,31 +316,8 @@ public class MathExpressionCommand implements Command {
 		CLOSE_BRACKET
 	}
 
-	private static class Symbol {
-		private final String name;
-		private final Object value;
-		private final boolean isFunction;
-
-		public Symbol(String name, Object value) {
-			this(name, value, false);
-		}
-
-		public Symbol(String name, Object value, boolean isFunction) {
-			this.name = name;
-			this.value = value;
-			this.isFunction = isFunction;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public Object getValue() {
-			return value;
-		}
-
-		public boolean isFunction() {
-			return isFunction;
-		}
+	public enum CalculatorMode {
+		DEGREES,
+		RADIANS
 	}
 }

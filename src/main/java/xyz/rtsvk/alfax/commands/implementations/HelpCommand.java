@@ -8,6 +8,7 @@ import xyz.rtsvk.alfax.commands.Command;
 import xyz.rtsvk.alfax.commands.CommandProcessor;
 
 import java.util.List;
+import java.util.Properties;
 
 public class HelpCommand implements Command {
 
@@ -18,7 +19,7 @@ public class HelpCommand implements Command {
 	}
 
 	@Override
-	public void handle(User user, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
+	public void handle(User user, Snowflake messageId, MessageChannel channel, List<String> args, Snowflake guildId, GatewayDiscordClient bot) {
 		StringBuilder sb = new StringBuilder();
 
 		if (args.isEmpty()) {
