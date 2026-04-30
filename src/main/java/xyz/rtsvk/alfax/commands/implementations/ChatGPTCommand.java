@@ -45,13 +45,7 @@ public class ChatGPTCommand implements ICommand {
 			return;
 		}
 
-		StringBuilder message = new StringBuilder();
-		for (int i = 0; i < args.size(); i++) {
-			message.append(args.get(i));
-			if (i != args.size() - 1) message.append(" ");
-		}
-
-		String messageContent = message.toString();
+		String messageContent = String.join(" ", args);
 		if (messageContent.isEmpty()) {
 			chat.sendMessage(language.getMessage("command.chatgpt.no-prompt"));
 			return;
@@ -100,8 +94,7 @@ public class ChatGPTCommand implements ICommand {
 				output.append(text);
 			});
 
-			String response = output.toString()
-					.replace("@", "@\u200D");   // Prevent mentions
+			String response = replaceForbidden(output.toString());   // Prevent mentions
 			String[] chunks = splitToChunks(response, 2000);
 			Snowflake refMessageId = chat.getInvokerMessage().getId();
 			for (String chunk : chunks) {
@@ -124,6 +117,10 @@ public class ChatGPTCommand implements ICommand {
 			chunks[i] = response.substring(start, end);
 		}
 		return chunks;
+	}
+
+	private String replaceForbidden(String text) {
+		return text.replaceAll("@", "@\u200D");
 	}
 
 	@Override
