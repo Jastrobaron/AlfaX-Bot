@@ -70,6 +70,7 @@ public class Config extends LinkedHashMap<String, Object> {
 
 		for (String arg : args) {
 			if (arg.isBlank()) continue;
+			arg = arg.trim();
 
 			if (checkPrefix) {
 				if (!arg.startsWith(ARG_PREFIX)) continue;
@@ -108,7 +109,7 @@ public class Config extends LinkedHashMap<String, Object> {
 			byte[] buffer = new byte[64];
 			int read;
 			while ((read = stream.read(buffer)) != -1) {
-				raw.append(new String(buffer, 0, read).trim());
+				raw.append(new String(buffer, 0, read));
 			}
 		}
 		String rawConfig = raw.toString().replace("\r\n", "\n");
@@ -118,7 +119,7 @@ public class Config extends LinkedHashMap<String, Object> {
 	/**
 	 * Copies the default-config.properties resource to a new file to generate a file with the default configuration
 	 * @param filename name of the new file
-	 * @throws IOException if the resource cannot be read or the output file cannot be written to
+	 * @throws IOException if the resource cannot be read, or the output file cannot be written to
 	 */
 	public static void copyDefaultConfig(String filename) throws IOException {
 		InputStream resource = Config.class.getResourceAsStream("default-config.properties");
