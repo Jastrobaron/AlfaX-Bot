@@ -18,7 +18,7 @@ public class FortuneTellerCommand implements ICommand {
 
 		List<String> answers = language.matchMessages("command.8ball.answer.*");
 		int index = Math.toIntExact(Math.round(Math.random() * answers.size()));
-		chat.sendMessage("**" + answers.get(index) + "**");
+		chat.sendMessage("**" + language.getMessage(answers.get(index)) + "**");
 	}
 
 	@Override
